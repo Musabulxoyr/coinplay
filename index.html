@@ -6,115 +6,285 @@
 <title>CoinPlay</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 <style>
-  :root { --bg:#0e1330; --card:#1a2150; --gold:#ffc928; --gold2:#ff9d00; --text:#f4f6ff; --muted:#9aa4d6; --ok:#3ddc97; }
-  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
-  html,body { margin:0; height:100%; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
-  body { display:flex; flex-direction:column; align-items:center; padding:20px 16px calc(20px + env(safe-area-inset-bottom)); gap:16px; }
-  .balance { text-align:center; }
-  .balance small { color:var(--muted); font-size:14px; }
-  .balance b { display:block; font-size:44px; line-height:1.1; color:var(--gold); }
-  .energy { width:100%; max-width:360px; }
-  .energy .bar { height:10px; background:var(--card); border-radius:99px; overflow:hidden; }
-  .energy .fill { height:100%; width:100%; background:linear-gradient(90deg,var(--gold2),var(--gold)); transition:width .2s; }
-  .energy span { display:block; margin-top:6px; color:var(--muted); font-size:13px; text-align:right; }
-  .stage { flex:1; display:flex; align-items:center; justify-content:center; width:100%; position:relative; }
-  #coin { width:min(62vw,260px); aspect-ratio:1; border-radius:50%; border:0; cursor:pointer;
-    background:radial-gradient(circle at 35% 30%, #fff1a8 0%, var(--gold) 45%, var(--gold2) 100%);
-    box-shadow:0 0 0 10px rgba(255,201,40,.18), 0 18px 40px rgba(0,0,0,.45);
-    font-size:min(26vw,110px); font-weight:800; color:#a86400; transition:transform .06s; }
-  #coin:active { transform:scale(.95); }
-  .pop { position:absolute; font-weight:800; font-size:26px; color:var(--gold); pointer-events:none; animation:up .8s ease-out forwards; }
-  @keyframes up { to { transform:translateY(-90px); opacity:0; } }
-  .actions { width:100%; max-width:360px; display:flex; flex-direction:column; gap:10px; }
-  button.ad { width:100%; padding:16px; border:0; border-radius:14px; font-size:17px; font-weight:700; background:var(--ok); color:#06281a; cursor:pointer; }
-  button.ad:disabled { opacity:.5; }
-  .msg { min-height:20px; text-align:center; color:var(--muted); font-size:14px; }
-  @media (prefers-reduced-motion: reduce) { .pop { animation:none; opacity:0; } #coin { transition:none; } }
+:root{--bg:#0e1330;--card:#1a2150;--gold:#ffc928;--gold2:#ff9d00;--text:#f4f6ff;--muted:#9aa4d6;--ok:#3ddc97}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{display:flex;flex-direction:column;align-items:center;padding:14px 14px calc(16px + env(safe-area-inset-bottom));gap:12px}
+.top{width:100%;max-width:400px;display:flex;justify-content:space-between;align-items:center;font-size:20px}
+.top b{color:var(--gold)}
+button{font:inherit;cursor:pointer}
+.btn{width:100%;padding:15px;border:0;border-radius:14px;font-size:17px;font-weight:700;background:var(--card);color:var(--text)}
+.btn.ok{background:var(--ok);color:#06281a}
+.btn:disabled{opacity:.5}
+#back{background:none;border:0;color:var(--muted);font-size:16px}
+.screen{width:100%;max-width:400px;display:flex;flex-direction:column;gap:12px;align-items:center}
+[hidden]{display:none!important}
+h2{margin:4px 0;text-align:center}
+.note{color:var(--muted);font-size:13px;text-align:center}
+.bar{width:100%;height:10px;background:var(--card);border-radius:99px;overflow:hidden}
+.fill{height:100%;background:linear-gradient(90deg,var(--gold2),var(--gold))}
+#coin{width:min(58vw,240px);aspect-ratio:1;border-radius:50%;border:0;margin:10px 0;background:radial-gradient(circle at 35% 30%,#fff1a8,var(--gold) 45%,var(--gold2));box-shadow:0 0 0 10px rgba(255,201,40,.18),0 16px 36px rgba(0,0,0,.45);font-size:90px;font-weight:800;color:#a86400}
+#coin:active{transform:scale(.95)}
+canvas{width:min(94vw,360px);aspect-ratio:1;background:#0a0f26;border-radius:12px;touch-action:none}
+.pad{display:grid;grid-template-columns:repeat(3,64px);gap:6px}
+.pad button{height:54px;border:0;border-radius:12px;background:var(--card);color:var(--text);font-size:22px}
+.board{width:min(94vw,400px);aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);border-radius:8px;overflow:hidden}
+.sq{display:flex;align-items:center;justify-content:center;position:relative}
+.light{background:#e8d9b5}.dark{background:#a9774b}
+.sel{outline:4px solid var(--gold);outline-offset:-4px}
+.hint::after{content:"";width:28%;height:28%;border-radius:50%;background:rgba(61,220,151,.75);position:absolute}
+.pc{font-size:min(10vw,40px);line-height:1}
+.pc.w{color:#fff;text-shadow:0 0 3px #000,0 0 3px #000}.pc.b{color:#161616}
+.ck{width:76%;height:76%;border-radius:50%;box-shadow:inset 0 0 0 4px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:20px}
+.ck.p{background:#f4f4f4}.ck.a{background:#2a2a2a}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:20px}
+#modal div{background:var(--card);border-radius:18px;padding:22px;width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px;text-align:center}
+#mtxt{font-size:22px;font-weight:800}
+.row{display:flex;justify-content:space-between;width:100%;padding:9px 13px;background:var(--card);border-radius:10px}
+#msg{min-height:18px;color:var(--muted);font-size:13px;text-align:center;max-width:400px}
 </style>
 </head>
 <body>
-  <div class="balance"><small>Balans</small><b id="bal">0</b></div>
+<div class="top"><span>🪙 <b id="bal">0</b></span><button id="back" hidden>← Menyu</button></div>
 
-  <div class="energy">
-    <div class="bar"><div class="fill" id="fill"></div></div>
-    <span id="enText">100 / 100</span>
+<section class="screen" id="menu">
+  <h2>CoinPlay</h2>
+  <button class="btn" data-g="tour">🏆 Juma turniri</button>
+  <button class="btn" data-g="snake">🐍 Ilon (kompyuterga qarshi)</button>
+  <button class="btn" data-g="checkers">⚪ Shashka (kompyuterga qarshi)</button>
+  <button class="btn" data-g="chess">♟ Shaxmat (kompyuterga qarshi)</button>
+  <button class="btn ok" id="adBoost">Reklama ko’r: +10 tanga</button>
+  <div class="note">G’alaba uchun +5 tanga. Onlayn rejim tez orada.</div>
+</section>
+
+<section class="screen" id="tour" hidden>
+  <h2>🏆 Juma turniri</h2>
+  <div id="tourBox" style="width:100%;display:flex;flex-direction:column;gap:10px"></div>
+</section>
+
+<section class="screen" id="snake" hidden>
+  <canvas id="cv" width="300" height="300"></canvas>
+  <div class="pad">
+    <span></span><button data-d="0,-1">▲</button><span></span>
+    <button data-d="-1,0">◀</button><button data-d="0,1">▼</button><button data-d="1,0">▶</button>
   </div>
+  <div class="note">Yashil ilon sizniki. Suring yoki tugmalarni bosing.</div>
+</section>
 
-  <div class="stage"><button id="coin" aria-label="Tanga">$</button></div>
+<section class="screen" id="checkers" hidden>
+  <div class="board" id="ckBoard"></div>
+  <div class="note">Siz oq donalar (pastda). Urish majburiy.</div>
+</section>
 
-  <div class="actions">
-    <button class="ad" id="adBoost">Reklama ko'r: +50 tanga</button>
-    <button class="ad" id="adEnergy">Reklama ko'r: energiya to'ldir</button>
-    <div class="msg" id="msg"></div>
-  </div>
+<section class="screen" id="chess" hidden>
+  <div class="board" id="chBoard"></div>
+  <div class="note">Siz oq donalar (pastda).</div>
+</section>
+
+<div id="msg"></div>
+<div id="modal" hidden><div><span id="mtxt"></span><button class="btn ok" id="again">Qayta o’ynash</button><button class="btn" id="tomenu">Menyu</button></div></div>
 
 <script>
-  // ====== SOZLAMALAR ======
-  const BLOCK_ID = "61096"; // Adsgram Block ID (UnitID)
-  const REWARD = 50;       // reklama uchun tanga
-  const MAX_ENERGY = 100;
-  const DAILY_AD_LIMIT = 20;
-  // ========================
+const BLOCK_ID="61096",REWARD=10,WIN=5,DAILY=20;
+const tg=window.Telegram&&Telegram.WebApp;if(tg){tg.ready();tg.expand();}
+const $=id=>document.getElementById(id);
+// DIQQAT: balans hozircha telefonda saqlanadi (sinov). Haqiqiy to’lov uchun serverga ko’chiriladi.
+const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const today=new Date().toISOString().slice(0,10);
+let balance=store.get("balance",0);
+let adsToday=store.get("adsDate","")===today?store.get("adsCount",0):0;store.set("adsDate",today);
+function save(){store.set("balance",balance);store.set("adsCount",adsToday)}
+function say(t){$("msg").textContent=t}
+function render(){$("bal").textContent=balance}
+function add(n){balance+=n;save();render()}
 
-  const tg = window.Telegram && Telegram.WebApp;
-  if (tg) { tg.ready(); tg.expand(); }
+let AdC=null;try{AdC=window.Adsgram.init({blockId:BLOCK_ID})}catch(e){}
+function showAd(ok){
+  if(adsToday>=DAILY){say("Bugungi reklama limiti tugadi.");return}
+  if(!AdC){say("Reklama hozircha tayyor emas.");return}
+  const bs=[$("adBoost")];bs.forEach(b=>b.disabled=true);
+  AdC.show().then(()=>{adsToday++;ok();save();render()}).catch(r=>say(r&&r.description?"Reklama: "+r.description:"Reklama ko’rsatilmadi.")).finally(()=>bs.forEach(b=>b.disabled=false));
+}
+$("adBoost").onclick=()=>showAd(()=>{balance+=REWARD;say("+"+REWARD+" tanga!")});
 
-  // DIQQAT: hozircha ma'lumot telefonning o'zida saqlanadi (sinov uchun).
-  // Haqiqiy pul to'lash uchun balans serverda saqlanishi kerak.
-  const store = {
-    get(k, d){ try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch(e){ return d; } },
-    set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
-  };
+let cur="menu",over=false,TM=false;
+const starters={tour:tourInit,snake:snakeStart,checkers:ckInit,chess:chInit};
+function go(n,t){
+  TM=!!t;stopSnake();cur=n;over=false;$("modal").hidden=true;say("");
+  ["menu","tour","snake","checkers","chess"].forEach(s=>$(s).hidden=s!==n);
+  $("back").hidden=n==="menu";
+  if(starters[n])starters[n]();
+}
+document.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>go(b.dataset.g));
+$("back").onclick=()=>go("menu");$("tomenu").onclick=()=>go("menu");$("again").onclick=()=>go(cur,TM);
+function end(t,win){over=true;if(win)add(WIN);$("mtxt").textContent=t+(win?" +"+WIN+" tanga":"");$("modal").hidden=false}
 
-  const today = new Date().toISOString().slice(0,10);
-  let balance = store.get("balance", 0);
-  let energy = store.get("energy", MAX_ENERGY);
-  let adsToday = store.get("adsDate", "") === today ? store.get("adsCount", 0) : 0;
-  store.set("adsDate", today);
+// ---- Ilon ----
+let S=null;
+const DIRS=[[1,0],[-1,0],[0,1],[0,-1]],COL=["#3ddc97","#ff6b6b","#6bb5ff","#ffc928"];
+function stopSnake(){if(S&&S.t){clearInterval(S.t);S.t=null}}
+function occ(x,y){return S.sn.some(s=>s.alive&&s.b.some(c=>c[0]===x&&c[1]===y))}
+function food(){let x,y;do{x=Math.random()*S.N|0;y=Math.random()*S.N|0}while(occ(x,y));S.f=[x,y]}
+function snakeStart(){
+  const mk=(x,y,d,me)=>({b:[[x,y],[x-d[0],y],[x-2*d[0],y]],d,alive:true,me});
+  S={N:15,t:null,sn:[mk(3,3,[1,0],1),mk(11,3,[-1,0]),mk(3,11,[1,0]),mk(11,11,[-1,0])]};
+  food();draw();S.t=setInterval(tick,190);
+}
+function botDir(s){
+  const h=s.b[0],N=S.N;
+  const ok=DIRS.filter(d=>!(d[0]===-s.d[0]&&d[1]===-s.d[1])).filter(d=>{const x=h[0]+d[0],y=h[1]+d[1];return x>=0&&y>=0&&x<N&&y<N&&!occ(x,y)});
+  if(!ok.length)return s.d;
+  const ds=d=>Math.abs(h[0]+d[0]-S.f[0])+Math.abs(h[1]+d[1]-S.f[1]);
+  ok.sort((a,b)=>ds(a)-ds(b));return Math.random()<.9?ok[0]:ok[ok.length-1];
+}
+function tick(){
+  if(over)return;
+  S.sn.forEach(s=>{if(!s.alive)return;if(s.me){if(s.nd)s.d=s.nd}else s.d=botDir(s)});
+  let eat=false;
+  S.sn.forEach(s=>{if(!s.alive)return;const h=[s.b[0][0]+s.d[0],s.b[0][1]+s.d[1]];s.b.unshift(h);if(h[0]===S.f[0]&&h[1]===S.f[1])eat=true;else s.b.pop()});
+  const dead=S.sn.filter(s=>{if(!s.alive)return false;const h=s.b[0];
+    return h[0]<0||h[1]<0||h[0]>=S.N||h[1]>=S.N||S.sn.some(t=>t.alive&&t.b.some((c,i)=>(t!==s||i>0)&&c[0]===h[0]&&c[1]===h[1]))});
+  dead.forEach(s=>s.alive=false);
+  if(eat)food();
+  draw();
+  const me=S.sn[0],left=S.sn.filter(s=>s.alive).length;
+  if(TM&&(!me.alive||left===1))tourSubmit(me.b.length);
+  if(!me.alive){stopSnake();end("Yutqazdingiz",0)}
+  else if(left===1){stopSnake();end("Siz yutdingiz!",1)}
+}
+function draw(){
+  const c=$("cv").getContext("2d"),k=300/S.N;c.clearRect(0,0,300,300);
+  c.fillStyle="#ff4d6d";c.beginPath();c.arc((S.f[0]+.5)*k,(S.f[1]+.5)*k,k*.38,0,7);c.fill();
+  S.sn.forEach((s,i)=>{if(!s.alive)return;c.fillStyle=COL[i];s.b.forEach((p,j)=>{c.globalAlpha=j?0.8:1;c.fillRect(p[0]*k+1,p[1]*k+1,k-2,k-2)});c.globalAlpha=1});
+}
+function setDir(dx,dy){if(!S)return;const s=S.sn[0];if(dx===-s.d[0]&&dy===-s.d[1])return;s.nd=[dx,dy]}
+document.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{const d=b.dataset.d.split(",").map(Number);setDir(d[0],d[1])});
+let tx=0,ty=0;const cvs=$("cv");
+cvs.addEventListener("touchstart",e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+cvs.addEventListener("touchend",e=>{const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;if(Math.max(Math.abs(dx),Math.abs(dy))<20)return;Math.abs(dx)>Math.abs(dy)?setDir(dx>0?1:-1,0):setDir(0,dy>0?1:-1)},{passive:true});
+document.addEventListener("keydown",e=>{const m={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key];if(m)setDir(m[0],m[1])});
 
-  const $ = id => document.getElementById(id);
-  function render(){
-    $("bal").textContent = balance;
-    $("fill").style.width = (energy / MAX_ENERGY * 100) + "%";
-    $("enText").textContent = energy + " / " + MAX_ENERGY;
+// ---- Shashka ----
+let B,turn,sel,chain,chainA;
+const inb=(r,c)=>r>=0&&c>=0&&r<8&&c<8;
+function ckInit(){B=Array.from({length:8},(_,r)=>Array.from({length:8},(_,c)=>(r+c)%2?(r<3?-1:r>4?1:0):0));turn=1;sel=null;chain=null;chainA=null;ckDraw()}
+function pm(b,r,c){
+  const p=b[r][c],s=Math.sign(p),k=Math.abs(p)===2,out=[];
+  const ds=k?[[1,1],[1,-1],[-1,1],[-1,-1]]:[[-s,1],[-s,-1]];
+  for(const[dr,dc]of ds){const r1=r+dr,c1=c+dc;if(!inb(r1,c1))continue;
+    if(!b[r1][c1])out.push({r,c,r2:r1,c2:c1});
+    else if(Math.sign(b[r1][c1])===-s){const r2=r1+dr,c2=c1+dc;if(inb(r2,c2)&&!b[r2][c2])out.push({r,c,r2,c2,x:[r1,c1]})}}
+  return out;
+}
+function allm(b,s){let m=[];for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(Math.sign(b[r][c])===s)m.push(...pm(b,r,c));const caps=m.filter(x=>x.x);return caps.length?caps:m}
+function doMove(m){
+  const p=B[m.r][m.c];B[m.r][m.c]=0;if(m.x)B[m.x[0]][m.x[1]]=0;
+  let np=p;if(Math.abs(p)===1&&((p>0&&m.r2===0)||(p<0&&m.r2===7)))np=p*2;
+  B[m.r2][m.c2]=np;
+  if(m.x&&np===p&&pm(B,m.r2,m.c2).some(x=>x.x))return{r:m.r2,c:m.c2};
+  return null;
+}
+function ckDraw(){
+  let h="";const tg2=sel?(chain?pm(B,chain.r,chain.c).filter(x=>x.x):allm(B,1)).filter(m=>m.r===sel[0]&&m.c===sel[1]):[];
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const p=B[r][c],hint=tg2.some(m=>m.r2===r&&m.c2===c),s=sel&&sel[0]===r&&sel[1]===c;
+    h+=`<div class="sq ${(r+c)%2?"dark":"light"} ${s?"sel":""} ${hint?"hint":""}" data-r="${r}" data-c="${c}">${p?`<div class="ck ${p>0?"p":"a"}">${Math.abs(p)===2?"♛":""}</div>`:""}</div>`;
   }
-  function save(){ store.set("balance", balance); store.set("energy", energy); store.set("adsCount", adsToday); }
-  function say(t){ $("msg").textContent = t; }
-
-  $("coin").addEventListener("click", e => {
-    if (energy <= 0) { say("Energiya tugadi. Reklama ko'rib to'ldiring."); return; }
-    energy--; balance++;
-    const p = document.createElement("div");
-    p.className = "pop"; p.textContent = "+1";
-    p.style.left = (e.offsetX ? "50%" : "50%");
-    $("coin").parentNode.appendChild(p);
-    setTimeout(() => p.remove(), 800);
-    if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
-    save(); render();
-  });
-
-  // Energiya sekin tiklanadi
-  setInterval(() => { if (energy < MAX_ENERGY) { energy++; save(); render(); } }, 3000);
-
-  let AdController = null;
-  try { AdController = window.Adsgram.init({ blockId: BLOCK_ID }); } catch(e){}
-
-  function showAd(onReward){
-    if (adsToday >= DAILY_AD_LIMIT) { say("Bugungi reklama limiti tugadi. Ertaga qaytib keling."); return; }
-    if (!AdController) { say("Reklama hozircha tayyor emas."); return; }
-    $("adBoost").disabled = $("adEnergy").disabled = true;
-    AdController.show().then(() => {
-      adsToday++; onReward(); save(); render();
-    }).catch(r => {
-      say(r && r.description ? "Reklama: " + r.description : "Reklama ko'rsatilmadi.");
-    }).finally(() => { $("adBoost").disabled = $("adEnergy").disabled = false; });
+  $("ckBoard").innerHTML=h;
+}
+$("ckBoard").onclick=e=>{
+  const q=e.target.closest(".sq");if(!q||over||turn!==1)return;
+  const r=+q.dataset.r,c=+q.dataset.c;
+  if(B[r][c]>0&&!chain){sel=[r,c]}
+  else if(sel){
+    const mv=chain?pm(B,chain.r,chain.c).filter(x=>x.x):allm(B,1);
+    const m=mv.find(x=>x.r===sel[0]&&x.c===sel[1]&&x.r2===r&&x.c2===c);
+    if(m){chain=doMove(m);sel=chain?[chain.r,chain.c]:null;
+      if(!chain){turn=-1;ckDraw();if(!allm(B,-1).length){end("Siz yutdingiz!",1);return}setTimeout(ckAI,500);return}}
   }
+  ckDraw();
+};
+function ckAI(){
+  if(over)return;
+  const m=chainA?pm(B,chainA.r,chainA.c).filter(x=>x.x):allm(B,-1);
+  if(!m.length){end("Siz yutdingiz!",1);return}
+  const pick=m[Math.random()*m.length|0];
+  chainA=doMove(pick);ckDraw();
+  if(chainA){setTimeout(ckAI,400);return}
+  turn=1;ckDraw();
+  if(!allm(B,1).length)end("Yutqazdingiz",0);
+}
 
-  $("adBoost").onclick = () => showAd(() => { balance += REWARD; say("+" + REWARD + " tanga qo'shildi!"); });
-  $("adEnergy").onclick = () => showAd(() => { energy = MAX_ENERGY; say("Energiya to'ldi!"); });
-
-  render();
+// ---- Shaxmat ----
+let G,cs=null;
+const U={p:"♟",r:"♜",n:"♞",b:"♝",q:"♛",k:"♚"},V={p:1,n:3,b:3,r:5,q:9,k:0};
+function chInit(){G=new Chess();cs=null;chDraw()}
+function chDraw(){
+  const b=G.board(),legal=cs?G.moves({square:cs,verbose:true}).map(m=>m.to):[];let h="";
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const sq="abcdefgh"[c]+(8-r),p=b[r][c];
+    h+=`<div class="sq ${(r+c)%2?"dark":"light"} ${sq===cs?"sel":""} ${legal.includes(sq)?"hint":""}" data-sq="${sq}">${p?`<span class="pc ${p.color}">${U[p.type]}</span>`:""}</div>`;
+  }
+  $("chBoard").innerHTML=h;
+}
+function chEnd(){
+  if(G.in_checkmate()){end(G.turn()==="b"?"Siz yutdingiz!":"Yutqazdingiz",G.turn()==="b");return true}
+  if(G.game_over()){end("Durang",0);return true}
+  return false;
+}
+$("chBoard").onclick=e=>{
+  const q=e.target.closest(".sq");if(!q||over||G.turn()!=="w")return;
+  const sq=q.dataset.sq,mv=cs?G.move({from:cs,to:sq,promotion:"q"}):null;
+  if(mv){cs=null;chDraw();if(!chEnd())setTimeout(chAI,400);return}
+  const p=G.get(sq);cs=p&&p.color==="w"?sq:null;chDraw();
+};
+function mat(){let s=0;for(const row of G.board())for(const p of row)if(p)s+=(p.color==="b"?1:-1)*V[p.type];return s}
+function chAI(){
+  if(over)return;
+  let best=-1e9,bm=[];
+  for(const m of G.moves()){
+    G.move(m);let sc;
+    if(G.in_checkmate())sc=1000;
+    else{const rs=G.moves();if(!rs.length)sc=0;else{let w=1e9;for(const r of rs){G.move(r);w=Math.min(w,G.in_checkmate()?-1000:mat());G.undo()}sc=w}}
+    G.undo();
+    if(sc>best){best=sc;bm=[m]}else if(sc===best)bm.push(m);
+  }
+  G.move(bm[Math.random()*bm.length|0]);chDraw();chEnd();
+}
+// ---- Turnir ----
+const INIT=()=>(tg&&tg.initData)||"";
+const esc=t=>String(t).replace(/[&<>"']/g,c=>"&#"+c.charCodeAt(0)+";");
+async function tapi(path,body){
+  const r=await fetch(path,body?{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({initData:INIT(),...body})}:{headers:{"x-init":INIT()}});
+  return r.json();
+}
+let TS=null;
+async function tourInit(){
+  const box=$("tourBox");box.textContent="Yuklanmoqda...";
+  try{TS=await tapi("/api/state")}catch(e){box.textContent="Server bilan aloqa yo’q";return}
+  if(TS.err){box.innerHTML='<div class="note">Turnir uchun ilovani Telegram ichida oching.</div>';return}
+  const s=TS;
+  let h=`<div class="note">Turnir har juma (Toshkent vaqti). Qatnashish: ${s.fee} tanga. Sovrin jamg’armasi: ${s.pool} tanga (1-o’rin 50%, 2-o’rin 30%, 3-o’rin 20%). Turnirda Ilon o’ynaladi, eng uzun ilon yutadi.</div>`;
+  h+=s.active?(s.joined?'<button class="btn ok" id="tPlay">🐍 Turnirda o’ynash</button>':`<button class="btn ok" id="tJoin">Qatnashish (${s.fee} tanga)</button>`):`<div class="note">Turnir hozir yopiq. Keyingi turnir: ${s.next}</div>`;
+  if(s.prize>0)h+=`<button class="btn ok" id="tClaim">Sovrin: ${s.prize} tanga olish</button>`;
+  h+="<h2>Reyting</h2>"+(s.top.length?s.top.map((p,i)=>`<div class="row"><span>${i+1}. ${esc(p.n)}</span><b>${p.s}</b></div>`).join(""):'<div class="note">Hozircha ishtirokchi yo’q</div>');
+  box.innerHTML=h;
+}
+$("tourBox").onclick=async e=>{
+  const id=e.target.id;
+  try{
+    if(id==="tJoin"){
+      if(balance<TS.fee){say("Tanga yetmaydi. Reklama ko’rib yig’ing.");return}
+      const r=await tapi("/api/join",{});
+      if(r.ok){if(!r.already){balance-=TS.fee;save();render()}tourInit()}else say(r.err||"Xato");
+    }else if(id==="tPlay")go("snake",true);
+    else if(id==="tClaim"){const r=await tapi("/api/claim",{});if(r.prize){add(r.prize);say("+"+r.prize+" tanga sovrin!")}tourInit()}
+  }catch(err){say("Server bilan aloqa yo’q")}
+};
+function tourSubmit(n){tapi("/api/score",{score:n}).catch(()=>{})}
+render();
 </script>
 </body>
 </html>
