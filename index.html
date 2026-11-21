@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>CoinPlay</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+<style>
+  :root { --bg:#0e1330; --card:#1a2150; --gold:#ffc928; --gold2:#ff9d00; --text:#f4f6ff; --muted:#9aa4d6; --ok:#3ddc97; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  body { display:flex; flex-direction:column; align-items:center; padding:20px 16px calc(20px + env(safe-area-inset-bottom)); gap:16px; }
+  .balance { text-align:center; }
+  .balance small { color:var(--muted); font-size:14px; }
+  .balance b { display:block; font-size:44px; line-height:1.1; color:var(--gold); }
+  .energy { width:100%; max-width:360px; }
+  .energy .bar { height:10px; background:var(--card); border-radius:99px; overflow:hidden; }
+  .energy .fill { height:100%; width:100%; background:linear-gradient(90deg,var(--gold2),var(--gold)); transition:width .2s; }
+  .energy span { display:block; margin-top:6px; color:var(--muted); font-size:13px; text-align:right; }
+  .stage { flex:1; display:flex; align-items:center; justify-content:center; width:100%; position:relative; }
+  #coin { width:min(62vw,260px); aspect-ratio:1; border-radius:50%; border:0; cursor:pointer;
+    background:radial-gradient(circle at 35% 30%, #fff1a8 0%, var(--gold) 45%, var(--gold2) 100%);
+    box-shadow:0 0 0 10px rgba(255,201,40,.18), 0 18px 40px rgba(0,0,0,.45);
+    font-size:min(26vw,110px); font-weight:800; color:#a86400; transition:transform .06s; }
+  #coin:active { transform:scale(.95); }
+  .pop { position:absolute; font-weight:800; font-size:26px; color:var(--gold); pointer-events:none; animation:up .8s ease-out forwards; }
+  @keyframes up { to { transform:translateY(-90px); opacity:0; } }
+  .actions { width:100%; max-width:360px; display:flex; flex-direction:column; gap:10px; }
+  button.ad { width:100%; padding:16px; border:0; border-radius:14px; font-size:17px; font-weight:700; background:var(--ok); color:#06281a; cursor:pointer; }
+  button.ad:disabled { opacity:.5; }
+  .msg { min-height:20px; text-align:center; color:var(--muted); font-size:14px; }
+  @media (prefers-reduced-motion: reduce) { .pop { animation:none; opacity:0; } #coin { transition:none; } }
+</style>
+</head>
+<body>
+  <div class="balance"><small>Balans</small><b id="bal">0</b></div>
+
+  <div class="energy">
+    <div class="bar"><div class="fill" id="fill"></div></div>
+    <span id="enText">100 / 100</span>
+  </div>
+
+  <div class="stage"><button id="coin" aria-label="Tanga">$</button></div>
+
+  <div class="actions">
+    <button class="ad" id="adBoost">Reklama ko'r: +50 tanga</button>
+    <button class="ad" id="adEnergy">Reklama ko'r: energiya to'ldir</button>
+    <div class="msg" id="msg"></div>
+  </div>
+
+<script>
+  // ====== SOZLAMALAR ======
+  const BLOCK_ID = "BLOCK_ID_SHU_YERGA"; // Adsgram bergan Block ID (masalan "1234")
+  const REWARD = 50;       // reklama uchun tanga
+  const MAX_ENERGY = 100;
+  const DAILY_AD_LIMIT = 20;
+  // ========================
+
+  const tg = window.Telegram && Telegram.WebApp;
+  if (tg) { tg.ready(); tg.expand(); }
+
+  // DIQQAT: hozircha ma'lumot telefonning o'zida saqlanadi (sinov uchun).
+  // Haqiqiy pul to'lash uchun balans serverda saqlanishi kerak.
+  const store = {
+    get(k, d){ try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch(e){ return d; } },
+    set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+  };
+
+  const today = new Date().toISOString().slice(0,10);
+  let balance = store.get("balance", 0);
+  let energy = store.get("energy", MAX_ENERGY);
+  let adsToday = store.get("adsDate", "") === today ? store.get("adsCount", 0) : 0;
+  store.set("adsDate", today);
+
+  const $ = id => document.getElementById(id);
+  function render(){
+    $("bal").textContent = balance;
+    $("fill").style.width = (energy / MAX_ENERGY * 100) + "%";
+    $("enText").textContent = energy + " / " + MAX_ENERGY;
+  }
+  function save(){ store.set("balance", balance); store.set("energy", energy); store.set("adsCount", adsToday); }
+  function say(t){ $("msg").textContent = t; }
+
+  $("coin").addEventListener("click", e => {
+    if (energy <= 0) { say("Energiya tugadi. Reklama ko'rib to'ldiring."); return; }
+    energy--; balance++;
+    const p = document.createElement("div");
+    p.className = "pop"; p.textContent = "+1";
+    p.style.left = (e.offsetX ? "50%" : "50%");
+    $("coin").parentNode.appendChild(p);
+    setTimeout(() => p.remove(), 800);
+    if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
+    save(); render();
+  });
+
+  // Energiya sekin tiklanadi
+  setInterval(() => { if (energy < MAX_ENERGY) { energy++; save(); render(); } }, 3000);
+
+  let AdController = null;
+  try { AdController = window.Adsgram.init({ blockId: BLOCK_ID }); } catch(e){}
+
+  function showAd(onReward){
+    if (adsToday >= DAILY_AD_LIMIT) { say("Bugungi reklama limiti tugadi. Ertaga qaytib keling."); return; }
+    if (!AdController) { say("Reklama hozircha tayyor emas."); return; }
+    $("adBoost").disabled = $("adEnergy").disabled = true;
+    AdController.show().then(() => {
+      adsToday++; onReward(); save(); render();
+    }).catch(r => {
+      say(r && r.description ? "Reklama: " + r.description : "Reklama ko'rsatilmadi.");
+    }).finally(() => { $("adBoost").disabled = $("adEnergy").disabled = false; });
+  }
+
+  $("adBoost").onclick = () => showAd(() => { balance += REWARD; say("+" + REWARD + " tanga qo'shildi!"); });
+  $("adEnergy").onclick = () => showAd(() => { energy = MAX_ENERGY; say("Energiya to'ldi!"); });
+
+  render();
+</script>
+</body>
+</html>
