@@ -106,7 +106,7 @@ async function poll() {
         if (m && m.text && m.text.startsWith("/start")) {
           await api("sendMessage", {
             chat_id: m.chat.id,
-            text: "🎮 CoinPlay: o’yna, reklama ko’r va tanga yig’!",
+            text: "👋 Salom, " + ((m.from && m.from.first_name) || "do’st") + "!\n\n🎮 CoinPlay’ga xush kelibsiz.\nIlon, shashka, shaxmat o’ynang, reklama ko’rib tanga yig’ing va juma turnirida sovrin yuting.\n\nBoshlash uchun pastdagi tugmani bosing 👇",
             reply_markup: { inline_keyboard: [[{ text: "🎮 O’ynash", web_app: { url: APP_URL } }]] }
           });
         }
@@ -114,7 +114,11 @@ async function poll() {
     } catch (e) { console.error("poll xato:", e.message); await new Promise(r => setTimeout(r, 3000)); }
   }
 }
-if (TOKEN && APP_URL) poll(); else console.log("BOT_TOKEN/APP_URL yo’q: bot o’chiq");
+if (TOKEN && APP_URL) {
+  // Xabar yozish maydoni yonida "O’ynash" tugmasi chiqadi
+  api("setChatMenuButton", { menu_button: { type: "web_app", text: "🎮 O’ynash", web_app: { url: APP_URL } } }).catch(() => {});
+  poll();
+} else console.log("BOT_TOKEN/APP_URL yo’q: bot o’chiq");
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log("CoinPlay ishga tushdi, port " + PORT));
