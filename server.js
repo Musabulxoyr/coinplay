@@ -100,6 +100,7 @@ async function poll() {
   for (;;) {
     try {
       const r = await api("getUpdates", { offset, timeout: 30 });
+      if (!r.ok) { console.error("getUpdates xato:", r.error_code, r.description); await new Promise(x => setTimeout(x, 5000)); continue; }
       for (const u of r.result || []) {
         offset = u.update_id + 1;
         const m = u.message;
@@ -117,6 +118,7 @@ async function poll() {
 if (TOKEN && APP_URL) {
   // Xabar yozish maydoni yonida "O’ynash" tugmasi chiqadi
   api("setChatMenuButton", { menu_button: { type: "web_app", text: "🎮 O’ynash", web_app: { url: APP_URL } } }).catch(() => {});
+  console.log("Bot yoqildi, /start kutilmoqda");
   poll();
 } else console.log("BOT_TOKEN/APP_URL yo’q: bot o’chiq");
 
