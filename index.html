@@ -44,10 +44,13 @@ canvas{width:min(94vw,360px);aspect-ratio:1;background:#0a0f26;border-radius:12p
 #mtxt{font-size:22px;font-weight:800}
 .row{display:flex;justify-content:space-between;width:100%;padding:9px 13px;background:var(--card);border-radius:10px}
 #msg{min-height:18px;color:var(--muted);font-size:13px;text-align:center;max-width:400px}
+#tgnote{width:100%;max-width:400px;padding:10px 12px;border-radius:12px;background:rgba(255,201,40,.12);color:var(--gold);font-size:13px;text-align:center}
 </style>
 </head>
 <body>
 <div class="top"><span>🪙 <b id="bal">0</b></span><button id="back" hidden>← Menyu</button></div>
+
+<div id="tgnote" hidden>Tanga, reklama va turnir faqat Telegram ichida ishlaydi. Uni botdagi «O’ynash» tugmasi orqali oching. O’yinlarni bu yerda ham sinab ko’rishingiz mumkin.</div>
 
 <section class="screen" id="menu">
   <h2>CoinPlay</h2>
@@ -55,8 +58,8 @@ canvas{width:min(94vw,360px);aspect-ratio:1;background:#0a0f26;border-radius:12p
   <button class="btn" data-g="snake">🐍 Ilon (kompyuterga qarshi)</button>
   <button class="btn" data-g="checkers">⚪ Shashka (kompyuterga qarshi)</button>
   <button class="btn" data-g="chess">♟ Shaxmat (kompyuterga qarshi)</button>
-  <button class="btn ok" id="adBoost">Reklama ko’r: +10 tanga</button>
-  <div class="note">G’alaba uchun +5 tanga. Onlayn rejim tez orada.</div>
+  <button class="btn ok" id="adBoost">▶ Reklama ko’rib +10 tanga olish</button>
+  <div class="note">Reklama ixtiyoriy: barcha o’yinlar reklamasiz ham ishlaydi. Reklamani oxirigacha ko’rsangiz +10 tanga beriladi. G’alaba uchun +5 tanga. Onlayn rejim tez orada.</div>
 </section>
 
 <section class="screen" id="tour" hidden>
@@ -88,8 +91,10 @@ canvas{width:min(94vw,360px);aspect-ratio:1;background:#0a0f26;border-radius:12p
 
 <script>
 const BLOCK_ID="61096",REWARD=10,WIN=5,DAILY=20;
-const tg=window.Telegram&&Telegram.WebApp;if(tg){tg.ready();tg.expand();}
+const tg=window.Telegram&&Telegram.WebApp;if(tg){try{tg.ready();tg.expand();}catch(e){}}
+const inTG=!!(tg&&tg.initData);
 const $=id=>document.getElementById(id);
+if(!inTG)$("tgnote").hidden=false;
 // DIQQAT: balans hozircha telefonda saqlanadi (sinov). Haqiqiy to’lov uchun serverga ko’chiriladi.
 const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const today=new Date().toISOString().slice(0,10);
@@ -100,12 +105,15 @@ function say(t){$("msg").textContent=t}
 function render(){$("bal").textContent=balance}
 function add(n){balance+=n;save();render()}
 
-let AdC=null;try{AdC=window.Adsgram.init({blockId:BLOCK_ID})}catch(e){}
+// Reklama SDK faqat Telegram ichida ishga tushadi (brauzerda xato oynasi chiqmasligi uchun)
+let AdC=null;
+if(inTG){try{AdC=window.Adsgram.init({blockId:BLOCK_ID})}catch(e){console.log("Adsgram init:",e)}}
 function showAd(ok){
+  if(!inTG){say("Reklama faqat Telegram ichida ishlaydi.");return}
   if(adsToday>=DAILY){say("Bugungi reklama limiti tugadi.");return}
-  if(!AdC){say("Reklama hozircha tayyor emas.");return}
+  if(!AdC){say("Reklama hozircha mavjud emas. Keyinroq urinib ko’ring.");return}
   const bs=[$("adBoost")];bs.forEach(b=>b.disabled=true);
-  AdC.show().then(()=>{adsToday++;ok();save();render()}).catch(r=>say(r&&r.description?"Reklama: "+r.description:"Reklama ko’rsatilmadi.")).finally(()=>bs.forEach(b=>b.disabled=false));
+  AdC.show().then(()=>{adsToday++;ok();save();render()}).catch(r=>{console.log("Adsgram:",r);say("Hozir reklama yo’q. Keyinroq urinib ko’ring.")}).finally(()=>bs.forEach(b=>b.disabled=false));
 }
 $("adBoost").onclick=()=>showAd(()=>{balance+=REWARD;say("+"+REWARD+" tanga!")});
 
