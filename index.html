@@ -148,26 +148,31 @@ function end(t,win){over=true;const w=win?((cur==="checkers"||cur==="chess")?[2,
 let S=null;const W=2000,COL=["#3ddc97","#ff6b6b","#6bb5ff","#ffc928","#c77dff","#ff9f1c","#00c2a8","#ff7aa2","#9bdb4d","#8d99ff"],FC=["🍎","🍇","🍊","🍓","🍌","🍉"],COL2=["#2bb87a","#d94f4f","#4f93d6","#d9a81f","#a45ed1","#d98417","#00907d","#d9577e","#74a83a","#6a74d6"];
 function stopSnake(){if(S&&S.t){clearInterval(S.t);S.t=null}}
 const NM=["Aziz","Bobur","Dilnoza","Eldor","Farhod","Gulnora","Hasan","Jasur","Kamola"];
-function mkSn(me,i){const x=200+Math.random()*(W-400),y=200+Math.random()*(W-400),a=Math.random()*6.28,s={x,y,a,ta:a,len:10,me,name:me?"Siz":NM[(i-1)%9],col:COL[i%10],c2:COL2[i%10],alive:true,h:[]};for(let k=0;k<33;k++)s.h.push({x:x-Math.cos(a)*k*3,y:y-Math.sin(a)*k*3});return s}
+function mkSn(me,i){const x=200+Math.random()*(W-400),y=200+Math.random()*(W-400),a=Math.random()*6.28,s={x,y,a,ta:a,len:me?10:16,sp:me?3:3.15+Math.random()*.2,me,name:me?"Siz":NM[(i-1)%9],col:COL[i%10],c2:COL2[i%10],alive:true,h:[]};for(let k=0;k<60;k++)s.h.push({x:x-Math.cos(a)*k*3,y:y-Math.sin(a)*k*3});return s}
 function segs(s){const o=[],n=Math.floor(s.len);for(let i=0;i<n;i++){const p=s.h[i*3];if(p)o.push(p)}return o}
 function addF(x,y){S.f.push({x:x==null?30+Math.random()*(W-60):x,y:y==null?30+Math.random()*(W-60):y,c:FC[Math.random()*6|0]})}
-function snakeStart(){showSnNote();S={t:null,time:0,rs:0,n:1,sn:[mkSn(1,0)],f:[]};for(let i=1;i<=9;i++)S.sn.push(mkSn(0,i));for(let i=0;i<220;i++)addF();
+function snakeStart(){showSnNote();S={t:null,time:0,rs:0,n:1,sn:[mkSn(1,0)],f:[]};for(let i=1;i<=9;i++)S.sn.push(mkSn(0,i));for(let i=0;i<150;i++)addF();
   const m0=S.sn[0];for(let i=0;i<14;i++){const a=Math.random()*6.28,d=50+Math.random()*140;addF(m0.x+Math.cos(a)*d,m0.y+Math.sin(a)*d)}
   const cv=$("cv"),dpr=Math.min(window.devicePixelRatio||1,3);cv.width=Math.round(cv.clientWidth*dpr)||360;cv.height=Math.round(cv.clientHeight*dpr)||360;S.k=cv.width/360;S.vh=360*cv.height/cv.width;draw();S.t=setInterval(tick,33)}
+function danger(s,x,y){
+  if(x<40||y<40||x>W-40||y>W-40)return true;
+  for(let j=0;j<S.sn.length;j++){const o=S.sn[j];if(o===s||!o.alive)continue;const g=S.sg[j];
+    for(let k=0;k<g.length;k++)if(Math.abs(g[k].x-x)<24&&Math.abs(g[k].y-y)<24)return true}
+  return false;
+}
 function bot(s){
-  let tx=null,ty=null,bd=1e9;
-  for(const f of S.f){const d=Math.abs(f.x-s.x)+Math.abs(f.y-s.y);if(d<bd){bd=d;tx=f.x;ty=f.y}}
-  let a=tx==null?s.a:Math.atan2(ty-s.y,tx-s.x);
-  if(s.x<90||s.y<90||s.x>W-90||s.y>W-90)a=Math.atan2(W/2-s.y,W/2-s.x);
-  else{const px=s.x+Math.cos(s.a)*34,py=s.y+Math.sin(s.a)*34;
-    for(const o of S.sn){if(o===s||!o.alive)continue;if(segs(o).some(p=>Math.abs(p.x-px)<20&&Math.abs(p.y-py)<20)){a=s.a+(Math.random()<.5?1.6:-1.6);break}}}
-  s.ta=a;
+  const me=S.sn[0];let bd=1e9,a=s.a;
+  for(const f of S.f){const d=Math.abs(f.x-s.x)+Math.abs(f.y-s.y);if(d<bd){bd=d;a=Math.atan2(f.y-s.y,f.x-s.x)}}
+  if(me.alive&&s.len>me.len*.7&&Math.hypot(me.x-s.x,me.y-s.y)<420)a=Math.atan2(me.y+Math.sin(me.a)*80-s.y,me.x+Math.cos(me.a)*80-s.x);
+  for(const o of[0,.5,-.5,1,-1,1.6,-1.6,2.4,-2.4]){const b=a+o;
+    if(!danger(s,s.x+Math.cos(b)*34,s.y+Math.sin(b)*34)&&!danger(s,s.x+Math.cos(b)*68,s.y+Math.sin(b)*68)){s.ta=b;return}}
+  s.ta=a+3;
 }
 function tick(){
-  if(over)return;S.time+=33;
+  if(over)return;S.time+=33;S.sg=S.sn.map(s=>s.alive?segs(s):[]);
   S.sn.forEach(s=>{if(!s.alive)return;if(!s.me)bot(s);
-    let d=s.ta-s.a;d=Math.atan2(Math.sin(d),Math.cos(d));s.a+=Math.max(-.13,Math.min(.13,d));
-    s.x+=Math.cos(s.a)*3;s.y+=Math.sin(s.a)*3;s.h.unshift({x:s.x,y:s.y});
+    let d=s.ta-s.a;d=Math.atan2(Math.sin(d),Math.cos(d));s.a+=Math.max(s.me?-.13:-.15,Math.min(s.me?.13:.15,d));
+    s.x+=Math.cos(s.a)*s.sp;s.y+=Math.sin(s.a)*s.sp;s.h.unshift({x:s.x,y:s.y});
     s.pu=Math.max(0,(s.pu||0)-1);const L=Math.floor(s.len)*3+3;while(s.h.length>L)s.h.pop();
     for(let i=S.f.length-1;i>=0;i--){const f=S.f[i];if(Math.hypot(f.x-s.x,f.y-s.y)<19){S.f.splice(i,1);s.len+=1;s.pu=7;addF()}}
   });
