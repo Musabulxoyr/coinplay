@@ -30,21 +30,24 @@ h2{margin:4px 0;text-align:center}
 canvas{width:min(94vw,360px);aspect-ratio:1;background:#0a0f26;border-radius:12px;touch-action:none}
 .pad{display:grid;grid-template-columns:repeat(3,64px);gap:6px}
 .pad button{height:54px;border:0;border-radius:12px;background:var(--card);color:var(--text);font-size:22px}
-.board{width:min(94vw,400px);aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);border-radius:8px;overflow:hidden}
-.sq{display:flex;align-items:center;justify-content:center;position:relative}
+.board{width:min(94vw,400px);aspect-ratio:1;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));border-radius:8px;overflow:hidden}
+.sq{min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;position:relative}
 .light{background:#e8d9b5}.dark{background:#a9774b}
 .sel{outline:4px solid var(--gold);outline-offset:-4px}
 .hint::after{content:"";width:28%;height:28%;border-radius:50%;background:rgba(61,220,151,.75);position:absolute}
 .pc{font-size:min(10vw,40px);line-height:1}
 .pc.w{color:#fff;text-shadow:0 0 3px #000,0 0 3px #000}.pc.b{color:#161616}
-.ck{width:76%;height:76%;border-radius:50%;box-shadow:inset 0 0 0 4px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:20px}
+.ck{width:76%;aspect-ratio:1;border-radius:50%;box-shadow:inset 0 0 0 4px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:20px}
 .ck.p{background:#f4f4f4}.ck.a{background:#2a2a2a}
 #modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:20px}
 #modal div{background:var(--card);border-radius:18px;padding:22px;width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px;text-align:center}
 #mtxt{font-size:22px;font-weight:800}
 .row{display:flex;justify-content:space-between;width:100%;padding:9px 13px;background:var(--card);border-radius:10px}
-#msg{min-height:18px;color:var(--muted);font-size:13px;text-align:center;max-width:400px}
+#msg{white-space:pre-line;min-height:18px;color:var(--muted);font-size:13px;text-align:center;max-width:400px}
 #tgnote{width:100%;max-width:400px;padding:10px 12px;border-radius:12px;background:rgba(255,201,40,.12);color:var(--gold);font-size:13px;text-align:center}
+.lv{display:flex;gap:8px;width:100%;max-width:400px}.lv button{flex:1;padding:10px;border:0;border-radius:10px;background:var(--card);color:var(--muted);font-weight:700}.lv button.on{background:var(--gold);color:#3a2600}
+#joy{width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25);position:fixed;display:none;pointer-events:none;z-index:5}#knob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff1a8,var(--gold));box-shadow:0 4px 10px rgba(0,0,0,.4)}#snNote{transition:opacity .6s}#snake{max-width:600px}#cv{width:min(100%,600px);aspect-ratio:auto;height:calc(100vh - 150px);height:calc(100dvh - 150px);max-height:800px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}.g2 .btn{padding:13px 6px;font-size:15px}.mb{display:grid;gap:8px;width:min(94vw,400px)}.c{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--card);font-weight:800}#mbox{touch-action:none}
 </style>
 </head>
 <body>
@@ -58,6 +61,13 @@ canvas{width:min(94vw,360px);aspect-ratio:1;background:#0a0f26;border-radius:12p
   <button class="btn" data-g="snake">🐍 Ilon (kompyuterga qarshi)</button>
   <button class="btn" data-g="checkers">⚪ Shashka (kompyuterga qarshi)</button>
   <button class="btn" data-g="chess">♟ Shaxmat (kompyuterga qarshi)</button>
+  <div class="g2">
+    <button class="btn" data-m="g2048">🔢 2048</button><button class="btn" data-m="gmem">🃏 Juftini top</button>
+    <button class="btn" data-m="gxo">❌ XO</button><button class="btn" data-m="gqz">❓ Viktorina</button>
+    <button class="btn" data-m="gmine">💣 Sapyor</button><button class="btn" data-m="gpz">🧩 Pyatnashki</button>
+    <button class="btn" data-m="gmole">🐹 Ko’rshapalak</button><button class="btn" data-m="gsim">🎵 Simon</button>
+    <button class="btn" data-m="gmath">➗ Matematika</button><button class="btn" data-m="grps">✊ Tosh-qaychi</button>
+  </div>
   <button class="btn ok" id="adBoost">▶ Reklama ko’rib +10 tanga olish</button>
   <div class="note">Reklama ixtiyoriy: barcha o’yinlar reklamasiz ham ishlaydi. Reklamani oxirigacha ko’rsangiz +10 tanga beriladi. G’alaba uchun +5 tanga. Onlayn rejim tez orada.</div>
 </section>
@@ -68,23 +78,24 @@ canvas{width:min(94vw,360px);aspect-ratio:1;background:#0a0f26;border-radius:12p
 </section>
 
 <section class="screen" id="snake" hidden>
-  <canvas id="cv" width="300" height="300"></canvas>
-  <div class="pad">
-    <span></span><button data-d="0,-1">▲</button><span></span>
-    <button data-d="-1,0">◀</button><button data-d="0,1">▼</button><button data-d="1,0">▶</button>
-  </div>
-  <div class="note">Yashil ilon sizniki. Suring yoki tugmalarni bosing.</div>
+  <canvas id="cv" width="360" height="360"></canvas>
+  <div id="joy"><div id="knob"></div></div>
+  <div class="note" id="snNote">Ekranni bosib suring: joystik chiqadi, ilon shu tomonga buriladi. 🍎🍇🍊 Mevalarni yeng, ilon kattalashadi. Dushman ilonning tanasiga tegsangiz o’lasiz. Maqsad: 40 uzunlik.</div>
 </section>
 
 <section class="screen" id="checkers" hidden>
+  <div class="lv" data-g="checkers"><button data-lv="0">Oson</button><button data-lv="1">O’rta</button><button data-lv="2">Qiyin</button><button data-lv="3">Usta</button></div>
   <div class="board" id="ckBoard"></div>
-  <div class="note">Siz oq donalar (pastda). Urish majburiy.</div>
+  <div class="note">Siz oq donalar (pastda). Urish majburiy, dona orqaga ham uradi. Damka (♛) uzoqqa yuradi va uzoqdan uradi. G’alaba: Oson +2, O’rta +5, Qiyin +8, Usta +12 tanga.</div>
 </section>
 
 <section class="screen" id="chess" hidden>
+  <div class="lv" data-g="chess"><button data-lv="0">Oson</button><button data-lv="1">O’rta</button><button data-lv="2">Qiyin</button><button data-lv="3">Usta</button></div>
   <div class="board" id="chBoard"></div>
-  <div class="note">Siz oq donalar (pastda).</div>
+  <div class="note">Siz oq donalar (pastda). G’alaba: Oson +2, O’rta +5, Qiyin +8, Usta +12 tanga.</div>
 </section>
+
+<section class="screen" id="mini" hidden><div id="mbox" style="width:100%;display:flex;flex-direction:column;gap:10px;align-items:center"></div></section>
 
 <div id="msg"></div>
 <div id="modal" hidden><div><span id="mtxt"></span><button class="btn ok" id="again">Qayta o’ynash</button><button class="btn" id="tomenu">Menyu</button></div></div>
@@ -94,7 +105,7 @@ const BLOCK_ID="61096",REWARD=10,WIN=5,DAILY=20;
 const tg=window.Telegram&&Telegram.WebApp;if(tg){try{tg.ready();tg.expand();}catch(e){}}
 const inTG=!!(tg&&tg.initData);
 const $=id=>document.getElementById(id);
-if(!inTG)$("tgnote").hidden=false;
+if(!inTG){const nb=$("tgnote");nb.hidden=false;nb.style.transition="opacity .6s";setTimeout(()=>{nb.style.opacity=0;setTimeout(()=>{nb.hidden=true},650)},5000)}
 // DIQQAT: balans hozircha telefonda saqlanadi (sinov). Haqiqiy to’lov uchun serverga ko’chiriladi.
 const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const today=new Date().toISOString().slice(0,10);
@@ -118,61 +129,103 @@ function showAd(ok){
 $("adBoost").onclick=()=>showAd(()=>{balance+=REWARD;say("+"+REWARD+" tanga!")});
 
 let cur="menu",over=false,TM=false;
-const starters={tour:tourInit,snake:snakeStart,checkers:ckInit,chess:chInit};
+const LV=Object.assign({checkers:1,chess:1},store.get("lv",{}));
+function markLv(){document.querySelectorAll(".lv").forEach(d=>d.querySelectorAll("button").forEach(b=>b.classList.toggle("on",+b.dataset.lv===LV[d.dataset.g])))}
+document.querySelectorAll(".lv button").forEach(b=>b.onclick=()=>{LV[b.parentNode.dataset.g]=+b.dataset.lv;store.set("lv",LV);go(cur)});
+const starters={tour:tourInit,snake:snakeStart,checkers:ckInit,chess:chInit,mini:()=>GM[MG]()};
 function go(n,t){
-  TM=!!t;stopSnake();cur=n;over=false;$("modal").hidden=true;say("");
-  ["menu","tour","snake","checkers","chess"].forEach(s=>$(s).hidden=s!==n);
+  TM=!!t;stopSnake();stopMini();cur=n;over=false;$("modal").hidden=true;say("");
+  ["menu","tour","snake","checkers","chess","mini"].forEach(s=>$(s).hidden=s!==n);
   $("back").hidden=n==="menu";
-  if(starters[n])starters[n]();
+  if(starters[n])starters[n]();markLv();
 }
 document.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>go(b.dataset.g));
+document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{MG=b.dataset.m;go("mini")});
 $("back").onclick=()=>go("menu");$("tomenu").onclick=()=>go("menu");$("again").onclick=()=>go(cur,TM);
-function end(t,win){over=true;if(win)add(WIN);$("mtxt").textContent=t+(win?" +"+WIN+" tanga":"");$("modal").hidden=false}
+function end(t,win){over=true;const w=win?((cur==="checkers"||cur==="chess")?[2,5,8,12][LV[cur]]:cur==="mini"?3:WIN):0;if(w)add(w);$("mtxt").textContent=t+(w?" +"+w+" tanga":"");$("modal").hidden=false}
 
-// ---- Ilon ----
-let S=null;
-const DIRS=[[1,0],[-1,0],[0,1],[0,-1]],COL=["#3ddc97","#ff6b6b","#6bb5ff","#ffc928"];
+// ---- Ilon (Slither) ----
+let S=null;const W=1400,COL=["#3ddc97","#ff6b6b","#6bb5ff","#ffc928","#c77dff","#ff9f1c"],FC=["🍎","🍇","🍊","🍓","🍌","🍉"],COL2=["#2bb87a","#d94f4f","#4f93d6","#d9a81f","#a45ed1","#d98417"];
 function stopSnake(){if(S&&S.t){clearInterval(S.t);S.t=null}}
-function occ(x,y){return S.sn.some(s=>s.alive&&s.b.some(c=>c[0]===x&&c[1]===y))}
-function food(){let x,y;do{x=Math.random()*S.N|0;y=Math.random()*S.N|0}while(occ(x,y));S.f=[x,y]}
-function snakeStart(){
-  const mk=(x,y,d,me)=>({b:[[x,y],[x-d[0],y],[x-2*d[0],y]],d,alive:true,me});
-  S={N:15,t:null,sn:[mk(3,3,[1,0],1),mk(11,3,[-1,0]),mk(3,11,[1,0]),mk(11,11,[-1,0])]};
-  food();draw();S.t=setInterval(tick,190);
-}
-function botDir(s){
-  const h=s.b[0],N=S.N;
-  const ok=DIRS.filter(d=>!(d[0]===-s.d[0]&&d[1]===-s.d[1])).filter(d=>{const x=h[0]+d[0],y=h[1]+d[1];return x>=0&&y>=0&&x<N&&y<N&&!occ(x,y)});
-  if(!ok.length)return s.d;
-  const ds=d=>Math.abs(h[0]+d[0]-S.f[0])+Math.abs(h[1]+d[1]-S.f[1]);
-  ok.sort((a,b)=>ds(a)-ds(b));return Math.random()<.9?ok[0]:ok[ok.length-1];
+function mkSn(me,i){const x=200+Math.random()*(W-400),y=200+Math.random()*(W-400),a=Math.random()*6.28,s={x,y,a,ta:a,len:10,me,col:COL[i%6],c2:COL2[i%6],alive:true,h:[]};for(let k=0;k<33;k++)s.h.push({x:x-Math.cos(a)*k*3,y:y-Math.sin(a)*k*3});return s}
+function segs(s){const o=[],n=Math.floor(s.len);for(let i=0;i<n;i++){const p=s.h[i*3];if(p)o.push(p)}return o}
+function addF(x,y){S.f.push({x:x==null?30+Math.random()*(W-60):x,y:y==null?30+Math.random()*(W-60):y,c:FC[Math.random()*6|0]})}
+function snakeStart(){showSnNote();S={t:null,time:0,rs:0,n:1,sn:[mkSn(1,0)],f:[]};for(let i=1;i<=5;i++)S.sn.push(mkSn(0,i));for(let i=0;i<130;i++)addF();
+  const m0=S.sn[0];for(let i=0;i<14;i++){const a=Math.random()*6.28,d=50+Math.random()*140;addF(m0.x+Math.cos(a)*d,m0.y+Math.sin(a)*d)}
+  const cv=$("cv"),dpr=Math.min(window.devicePixelRatio||1,3);cv.width=Math.round(cv.clientWidth*dpr)||360;cv.height=Math.round(cv.clientHeight*dpr)||360;S.k=cv.width/360;S.vh=360*cv.height/cv.width;draw();S.t=setInterval(tick,33)}
+function bot(s){
+  let tx=null,ty=null,bd=1e9;
+  for(const f of S.f){const d=Math.abs(f.x-s.x)+Math.abs(f.y-s.y);if(d<bd){bd=d;tx=f.x;ty=f.y}}
+  let a=tx==null?s.a:Math.atan2(ty-s.y,tx-s.x);
+  if(s.x<90||s.y<90||s.x>W-90||s.y>W-90)a=Math.atan2(W/2-s.y,W/2-s.x);
+  else{const px=s.x+Math.cos(s.a)*34,py=s.y+Math.sin(s.a)*34;
+    for(const o of S.sn){if(o===s||!o.alive)continue;if(segs(o).some(p=>Math.abs(p.x-px)<20&&Math.abs(p.y-py)<20)){a=s.a+(Math.random()<.5?1.6:-1.6);break}}}
+  s.ta=a;
 }
 function tick(){
-  if(over)return;
-  S.sn.forEach(s=>{if(!s.alive)return;if(s.me){if(s.nd)s.d=s.nd}else s.d=botDir(s)});
-  let eat=false;
-  S.sn.forEach(s=>{if(!s.alive)return;const h=[s.b[0][0]+s.d[0],s.b[0][1]+s.d[1]];s.b.unshift(h);if(h[0]===S.f[0]&&h[1]===S.f[1])eat=true;else s.b.pop()});
-  const dead=S.sn.filter(s=>{if(!s.alive)return false;const h=s.b[0];
-    return h[0]<0||h[1]<0||h[0]>=S.N||h[1]>=S.N||S.sn.some(t=>t.alive&&t.b.some((c,i)=>(t!==s||i>0)&&c[0]===h[0]&&c[1]===h[1]))});
-  dead.forEach(s=>s.alive=false);
-  if(eat)food();
+  if(over)return;S.time+=33;
+  S.sn.forEach(s=>{if(!s.alive)return;if(!s.me)bot(s);
+    let d=s.ta-s.a;d=Math.atan2(Math.sin(d),Math.cos(d));s.a+=Math.max(-.13,Math.min(.13,d));
+    s.x+=Math.cos(s.a)*3;s.y+=Math.sin(s.a)*3;s.h.unshift({x:s.x,y:s.y});
+    s.pu=Math.max(0,(s.pu||0)-1);const L=Math.floor(s.len)*3+3;while(s.h.length>L)s.h.pop();
+    for(let i=S.f.length-1;i>=0;i--){const f=S.f[i];if(Math.hypot(f.x-s.x,f.y-s.y)<19){S.f.splice(i,1);s.len+=1;s.pu=7;addF()}}
+  });
+  const sg=S.sn.map(s=>s.alive?segs(s):[]);
+  S.sn.forEach((s,i)=>{if(!s.alive)return;let dead=s.x<8||s.y<8||s.x>W-8||s.y>W-8;
+    for(let j=0;j<S.sn.length&&!dead;j++){if(j===i)continue;dead=sg[j].some(p=>Math.hypot(p.x-s.x,p.y-s.y)<12)}
+    if(dead){s.alive=false;sg[i].forEach((p,k)=>{if(k%2===0)addF(p.x+Math.random()*10-5,p.y+Math.random()*10-5)})}});
+  S.sn=S.sn.filter(s=>s.alive||s.me);
+  if(S.sn.filter(s=>!s.me).length<5&&++S.rs>40){S.rs=0;S.sn.push(mkSn(0,++S.n))}
+  const me=S.sn[0],L=Math.floor(me.len);
+  if(!me.alive){stopSnake();if(TM)tourSubmit(L);end("Yutqazdingiz. Uzunlik: "+L,0);return}
+  if(TM&&S.time>=90000){stopSnake();tourSubmit(L);end("Vaqt tugadi! Uzunlik: "+L,0);return}
+  if(!TM&&L>=40){stopSnake();end("Siz yutdingiz! Uzunlik: "+L,1);return}
   draw();
-  const me=S.sn[0],left=S.sn.filter(s=>s.alive).length;
-  if(TM&&(!me.alive||left===1))tourSubmit(me.b.length);
-  if(!me.alive){stopSnake();end("Yutqazdingiz",0)}
-  else if(left===1){stopSnake();end("Siz yutdingiz!",1)}
 }
 function draw(){
-  const c=$("cv").getContext("2d"),k=300/S.N;c.clearRect(0,0,300,300);
-  c.fillStyle="#ff4d6d";c.beginPath();c.arc((S.f[0]+.5)*k,(S.f[1]+.5)*k,k*.38,0,7);c.fill();
-  S.sn.forEach((s,i)=>{if(!s.alive)return;c.fillStyle=COL[i];s.b.forEach((p,j)=>{c.globalAlpha=j?0.8:1;c.fillRect(p[0]*k+1,p[1]*k+1,k-2,k-2)});c.globalAlpha=1});
+  const c=$("cv").getContext("2d"),me=S.sn[0],VS=360,VH=S.vh,tm=S.time/1000;
+  c.setTransform(S.k,0,0,S.k,0,0);
+  c.fillStyle="#070b1e";c.fillRect(0,0,VS,VH);
+  c.save();c.translate(VS/2-me.x,VH/2-me.y);
+  const g=c.createRadialGradient(W/2,W/2,100,W/2,W/2,W*.75);g.addColorStop(0,"#16204f");g.addColorStop(1,"#0d1438");
+  c.fillStyle=g;c.fillRect(0,0,W,W);
+  c.fillStyle="rgba(255,255,255,.08)";
+  for(let x=0;x<=W;x+=50)for(let y=0;y<=W;y+=50)if(Math.abs(x-me.x)<VS/2+50&&Math.abs(y-me.y)<VH/2+50){c.beginPath();c.arc(x,y,1.6,0,7);c.fill()}
+  c.shadowColor="#ff4d6d";c.shadowBlur=14;c.strokeStyle="#ff4d6d";c.lineWidth=5;c.strokeRect(0,0,W,W);c.shadowBlur=0;
+  c.font="19px system-ui";c.textAlign="center";c.textBaseline="middle";
+  for(const f of S.f){if(Math.abs(f.x-me.x)>VS/2+20||Math.abs(f.y-me.y)>VH/2+20)continue;
+    const b=Math.sin(tm*4+f.x)*2;
+    c.fillStyle="rgba(255,255,255,.12)";c.beginPath();c.arc(f.x,f.y+b,13,0,7);c.fill();
+    c.fillStyle="#fff";c.fillText(f.c,f.x,f.y+b+1)}
+  S.sn.forEach(s=>{if(!s.alive)return;
+    const r=7+Math.min(6,s.len/18),n=Math.min(s.h.length-1,Math.floor(s.len)*3);
+    if(s.me){c.shadowColor=s.col;c.shadowBlur=12}
+    for(let i=n;i>=1;i-=2){const p=s.h[i];if(Math.abs(p.x-me.x)>VS/2+20||Math.abs(p.y-me.y)>VH/2+20)continue;
+      c.fillStyle=(i/6|0)%2?s.col:s.c2;c.beginPath();c.arc(p.x,p.y,r,0,7);c.fill()}
+    c.shadowBlur=0;
+    const hr=r+2+(s.pu||0)*.5,ex=Math.cos(s.a),ey=Math.sin(s.a);
+    c.fillStyle=s.col;c.beginPath();c.arc(s.x,s.y,hr,0,7);c.fill();
+    for(const k of[-1,1]){const px=s.x+ex*hr*.35-ey*hr*.5*k,py=s.y+ey*hr*.35+ex*hr*.5*k;
+      c.fillStyle="#fff";c.beginPath();c.arc(px,py,hr*.34,0,7);c.fill();
+      c.fillStyle="#111";c.beginPath();c.arc(px+ex*hr*.12,py+ey*hr*.12,hr*.17,0,7);c.fill()}
+  });
+  c.restore();
+  c.fillStyle="rgba(0,0,0,.5)";c.fillRect(8,8,TM?200:170,26);
+  c.fillStyle="#fff";c.font="bold 14px system-ui";c.textAlign="left";
+  c.fillText("🍎 Uzunlik: "+Math.floor(me.len)+(TM?"   ⏱ "+Math.max(0,90-(S.time/1000|0))+" s":"/40"),14,22);
 }
-function setDir(dx,dy){if(!S)return;const s=S.sn[0];if(dx===-s.d[0]&&dy===-s.d[1])return;s.nd=[dx,dy]}
-document.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{const d=b.dataset.d.split(",").map(Number);setDir(d[0],d[1])});
-let tx=0,ty=0;const cvs=$("cv");
-cvs.addEventListener("touchstart",e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
-cvs.addEventListener("touchend",e=>{const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;if(Math.max(Math.abs(dx),Math.abs(dy))<20)return;Math.abs(dx)>Math.abs(dy)?setDir(dx>0?1:-1,0):setDir(0,dy>0?1:-1)},{passive:true});
-document.addEventListener("keydown",e=>{const m={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key];if(m)setDir(m[0],m[1])});
+const cvs=$("cv");
+function aim(e){if(!S||over)return;const r=cvs.getBoundingClientRect();S.sn[0].ta=Math.atan2(e.clientY-(r.top+r.height/2),e.clientX-(r.left+r.width/2))}
+
+document.addEventListener("keydown",e=>{const m={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key];if(m&&S&&!over)S.sn[0].ta=Math.atan2(m[1],m[0])});
+
+function showSnNote(){const n=$("snNote");clearTimeout(window.snT);n.hidden=false;n.style.opacity=1;window.snT=setTimeout(()=>{n.style.opacity=0;setTimeout(()=>{n.hidden=true},650)},5000)}
+const joy=$("joy"),knob=$("knob");let JC=null;
+function jmove(e){if(!S||over||!JC)return;const dx=e.clientX-JC.x,dy=e.clientY-JC.y,m=Math.hypot(dx,dy),k=Math.min(m,37)/(m||1);
+  knob.style.transform="translate("+dx*k+"px,"+dy*k+"px)";if(m>8)S.sn[0].ta=Math.atan2(dy,dx)}
+cvs.addEventListener("pointerdown",e=>{try{cvs.setPointerCapture(e.pointerId)}catch(x){}JC={x:e.clientX,y:e.clientY};joy.style.left=(e.clientX-65)+"px";joy.style.top=(e.clientY-65)+"px";joy.style.display="block";knob.style.transform="translate(0,0)"});
+cvs.addEventListener("pointermove",e=>{if(e.buttons)jmove(e)});
+["pointerup","pointercancel"].forEach(n=>cvs.addEventListener(n,()=>{joy.style.display="none";JC=null}));
 
 // ---- Shashka ----
 let B,turn,sel,chain,chainA;
@@ -180,20 +233,30 @@ const inb=(r,c)=>r>=0&&c>=0&&r<8&&c<8;
 function ckInit(){B=Array.from({length:8},(_,r)=>Array.from({length:8},(_,c)=>(r+c)%2?(r<3?-1:r>4?1:0):0));turn=1;sel=null;chain=null;chainA=null;ckDraw()}
 function pm(b,r,c){
   const p=b[r][c],s=Math.sign(p),k=Math.abs(p)===2,out=[];
-  const ds=k?[[1,1],[1,-1],[-1,1],[-1,-1]]:[[-s,1],[-s,-1]];
-  for(const[dr,dc]of ds){const r1=r+dr,c1=c+dc;if(!inb(r1,c1))continue;
-    if(!b[r1][c1])out.push({r,c,r2:r1,c2:c1});
-    else if(Math.sign(b[r1][c1])===-s){const r2=r1+dr,c2=c1+dc;if(inb(r2,c2)&&!b[r2][c2])out.push({r,c,r2,c2,x:[r1,c1]})}}
+  for(const[dr,dc]of[[1,1],[1,-1],[-1,1],[-1,-1]]){
+    let r1=r+dr,c1=c+dc;
+    if(!k){
+      if(!inb(r1,c1))continue;
+      if(!b[r1][c1]){if(dr===-s)out.push({r,c,r2:r1,c2:c1})}
+      else if(Math.sign(b[r1][c1])===-s){const r2=r1+dr,c2=c1+dc;if(inb(r2,c2)&&!b[r2][c2])out.push({r,c,r2,c2,x:[r1,c1]})}
+    }else{
+      while(inb(r1,c1)&&!b[r1][c1]){out.push({r,c,r2:r1,c2:c1});r1+=dr;c1+=dc}
+      if(inb(r1,c1)&&Math.sign(b[r1][c1])===-s){
+        let r2=r1+dr,c2=c1+dc;
+        while(inb(r2,c2)&&!b[r2][c2]){out.push({r,c,r2,c2,x:[r1,c1]});r2+=dr;c2+=dc}
+      }
+    }
+  }
   return out;
 }
 function allm(b,s){let m=[];for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(Math.sign(b[r][c])===s)m.push(...pm(b,r,c));const caps=m.filter(x=>x.x);return caps.length?caps:m}
-function doMove(m){
-  const p=B[m.r][m.c];B[m.r][m.c]=0;if(m.x)B[m.x[0]][m.x[1]]=0;
+function applyM(b,m){
+  const p=b[m.r][m.c];b[m.r][m.c]=0;if(m.x)b[m.x[0]][m.x[1]]=0;
   let np=p;if(Math.abs(p)===1&&((p>0&&m.r2===0)||(p<0&&m.r2===7)))np=p*2;
-  B[m.r2][m.c2]=np;
-  if(m.x&&np===p&&pm(B,m.r2,m.c2).some(x=>x.x))return{r:m.r2,c:m.c2};
-  return null;
+  b[m.r2][m.c2]=np;
+  return !!(m.x&&pm(b,m.r2,m.c2).some(x=>x.x));
 }
+function doMove(m){return applyM(B,m)?{r:m.r2,c:m.c2}:null}
 function ckDraw(){
   let h="";const tg2=sel?(chain?pm(B,chain.r,chain.c).filter(x=>x.x):allm(B,1)).filter(m=>m.r===sel[0]&&m.c===sel[1]):[];
   for(let r=0;r<8;r++)for(let c=0;c<8;c++){
@@ -214,15 +277,37 @@ $("ckBoard").onclick=e=>{
   }
   ckDraw();
 };
+function ext(b,m,pa,out){const nb=b.map(r=>r.slice()),np=pa.concat(m);if(applyM(nb,m)){for(const n of pm(nb,m.r2,m.c2).filter(x=>x.x))ext(nb,n,np,out)}else out.push({p:np,b:nb})}
+function seqs(b,s){const o=[];for(const m of allm(b,s))ext(b,m,[],o);return o}
+function cev(b){let s=0;for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=b[r][c];if(!p)continue;const v=Math.abs(p)===2?300:100+(p<0?r:7-r)*5;s+=p<0?v:-v}return s}
+let ckDL=1e15,ckTO=false;
+function cab(b,s,d,a,bt){
+  if(d===0||ckTO||(ckTO=Date.now()>ckDL))return cev(b);
+  const ms=seqs(b,s);if(!ms.length)return s===-1?-9999-d:9999+d;
+  let best=s===-1?-1e9:1e9;
+  for(const q of ms){const v=cab(q.b,-s,d-1,a,bt);
+    if(s===-1){if(v>best)best=v;if(best>a)a=best}else{if(v<best)best=v;if(best<bt)bt=best}
+    if(bt<=a)break}
+  return best;
+}
+function playSeq(p){let i=0;(function st(){applyM(B,p[i]);ckDraw();i++;if(i<p.length)setTimeout(st,400);else{turn=1;ckDraw();if(!allm(B,1).length)end("Yutqazdingiz",0)}})()}
 function ckAI(){
   if(over)return;
-  const m=chainA?pm(B,chainA.r,chainA.c).filter(x=>x.x):allm(B,-1);
-  if(!m.length){end("Siz yutdingiz!",1);return}
-  const pick=m[Math.random()*m.length|0];
-  chainA=doMove(pick);ckDraw();
-  if(chainA){setTimeout(ckAI,400);return}
-  turn=1;ckDraw();
-  if(!allm(B,1).length)end("Yutqazdingiz",0);
+  let ms=seqs(B,-1);if(!ms.length){end("Siz yutdingiz!",1);return}
+  const lv=LV.checkers;let pick;ckTO=false;ckDL=1e15;
+  if(lv===0)pick=ms[Math.random()*ms.length|0];
+  else if(lv<3){const d=lv===1?3:4;let best=-1e9,bm=[];for(const q of ms){const v=cab(q.b,1,d-1,-1e9,1e9);if(v>best){best=v;bm=[q]}else if(v===best)bm.push(q)}pick=bm[Math.random()*bm.length|0]}
+  else{
+    ms.sort(()=>Math.random()-.5);pick=ms[0];ckDL=Date.now()+2200;
+    for(let d=2;d<=14;d++){
+      ckTO=false;let best=-1e9,bq=null;
+      for(const q of ms){const v=cab(q.b,1,d-1,best,1e9);if(ckTO)break;if(v>best||!bq){best=v;bq=q}}
+      if(ckTO)break;
+      pick=bq;ms.splice(ms.indexOf(bq),1);ms.unshift(bq);
+      if(best>=9000)break;
+    }
+  }
+  playSeq(pick.p);
 }
 
 // ---- Shaxmat ----
@@ -245,22 +330,134 @@ function chEnd(){
 $("chBoard").onclick=e=>{
   const q=e.target.closest(".sq");if(!q||over||G.turn()!=="w")return;
   const sq=q.dataset.sq,mv=cs?G.move({from:cs,to:sq,promotion:"q"}):null;
-  if(mv){cs=null;chDraw();if(!chEnd())setTimeout(chAI,400);return}
+  if(mv){cs=null;chDraw();if(!chEnd()){say("Kompyuter o’ylayapti...");setTimeout(chAI,400)}return}
   const p=G.get(sq);cs=p&&p.color==="w"?sq:null;chDraw();
 };
-function mat(){let s=0;for(const row of G.board())for(const p of row)if(p)s+=(p.color==="b"?1:-1)*V[p.type];return s}
+function ev(){
+  let s=0;const bd=G.board();
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=bd[r][c];if(!p)continue;
+    const cen=3.5-Math.max(Math.abs(r-3.5),Math.abs(c-3.5));
+    const v=V[p.type]*100+(p.type==="p"?(p.color==="b"?r:7-r)*6:p.type==="k"?0:cen*4);
+    s+=p.color==="b"?v:-v}
+  return s;
+}
+let chDL=1e15,chTO=false;
+function ab(d,a,b){
+  if(d===0||chTO||(chTO=Date.now()>chDL))return ev();
+  const ms=G.moves({verbose:true}),max=G.turn()==="b";
+  if(!ms.length)return G.in_check()?(max?-99999-d:99999+d):0;
+  ms.sort((x,y)=>(y.captured?V[y.captured]+1:0)-(x.captured?V[x.captured]+1:0));
+  let best=max?-1e9:1e9;
+  for(const m of ms){G.move(m);const v=ab(d-1,a,b);G.undo();
+    if(max){if(v>best)best=v;if(best>a)a=best}else{if(v<best)best=v;if(best<b)b=best}
+    if(b<=a)break}
+  return best;
+}
 function chAI(){
   if(over)return;
-  let best=-1e9,bm=[];
-  for(const m of G.moves()){
-    G.move(m);let sc;
-    if(G.in_checkmate())sc=1000;
-    else{const rs=G.moves();if(!rs.length)sc=0;else{let w=1e9;for(const r of rs){G.move(r);w=Math.min(w,G.in_checkmate()?-1000:mat());G.undo()}sc=w}}
-    G.undo();
-    if(sc>best){best=sc;bm=[m]}else if(sc===best)bm.push(m);
+  chTO=false;chDL=1e15;
+  const ms=G.moves({verbose:true}),lv=LV.chess;let pick=null;
+  if(!ms.length){chEnd();return}
+  if(lv===0){const cp=ms.filter(m=>m.captured);pick=cp.length&&Math.random()<.4?cp[Math.random()*cp.length|0]:ms[Math.random()*ms.length|0]}
+  else if(lv<3){
+    ms.sort(()=>Math.random()-.5);let best=-1e9;
+    for(const m of ms){G.move(m);
+      if(G.in_checkmate()){G.undo();pick=m;break}
+      const v=ab(lv===1?1:2,best,1e9);G.undo();
+      if(v>best||!pick){best=v;pick=m}}
+  }else{
+    ms.sort(()=>Math.random()-.5);pick=ms[0];chDL=Date.now()+3000;
+    for(let d=2;d<=5;d++){
+      chTO=false;let best=-1e9,bm=null,mate=false;
+      for(const m of ms){G.move(m);
+        let v;if(G.in_checkmate()){v=1e6;mate=true}else v=ab(d-1,best,1e9);
+        G.undo();if(chTO)break;
+        if(v>best||!bm){best=v;bm=m}
+        if(mate)break}
+      if(chTO)break;
+      pick=bm;ms.splice(ms.indexOf(bm),1);ms.unshift(bm);
+      if(best>=90000)break;
+    }
   }
-  G.move(bm[Math.random()*bm.length|0]);chDraw();chEnd();
+  G.move(pick);say("");chDraw();chEnd();
 }
+// ---- Mini o’yinlar ----
+let MG="g2048",MT=[];const M=$("mbox"),GM={},rnd=n=>Math.random()*n|0,shuf=a=>a.sort(()=>Math.random()-.5),mset=h=>{M.innerHTML=h};
+function stopMini(){MT.forEach(x=>{clearInterval(x);clearTimeout(x)});MT=[];M.onclick=M.onpointerdown=M.onpointerup=null}
+function mtimer(f,ms,rp){const x=(rp?setInterval:setTimeout)(f,ms);MT.push(x);return x}
+const BT='border:0;color:inherit;';
+GM.g2048=()=>{let g=Array(16).fill(0),sx=0,sy=0;
+  const add=()=>{const e=g.map((v,i)=>v?-1:i).filter(i=>i>=0);if(e.length)g[e[rnd(e.length)]]=Math.random()<.9?2:4};
+  const draw=()=>mset(`<div class="note">Barmoq bilan suring. 256 ga yeting!</div><div class="mb" style="grid-template-columns:repeat(4,1fr)">${g.map(v=>`<div class="c" style="background:${v?`hsl(${45-Math.log2(v)*3},85%,${68-Math.log2(v)*3}%)`:"#141a40"};color:#2a1a00;font-size:${v>999?17:v>99?22:26}px">${v||""}</div>`).join("")}</div>`);
+  const line=a=>{const r=a.filter(x=>x),o=[];for(let i=0;i<r.length;i++){if(r[i]===r[i+1]){o.push(r[i]*2);i++}else o.push(r[i])}while(o.length<4)o.push(0);return o};
+  const mv=d=>{const old=g.join();for(let i=0;i<4;i++){const ix=[0,1,2,3].map(j=>d<2?i*4+j:j*4+i);if(d%2)ix.reverse();const r=line(ix.map(k=>g[k]));ix.forEach((k,j)=>g[k]=r[j])}
+    if(g.join()===old)return;add();draw();
+    if(Math.max(...g)>=256){end("256 ga yetdingiz!",1);return}
+    if(!g.includes(0)&&!g.some((v,i)=>(i%4<3&&v===g[i+1])||(i<12&&v===g[i+4])))end("Yurish qolmadi",0)};
+  M.onpointerdown=e=>{sx=e.clientX;sy=e.clientY};
+  M.onpointerup=e=>{if(over)return;const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.max(Math.abs(dx),Math.abs(dy))<24)return;mv(Math.abs(dx)>Math.abs(dy)?(dx>0?1:0):(dy>0?3:2))};
+  add();add();draw()};
+GM.gmem=()=>{const e=shuf([..."🍎🍇🍊🍓🍌🍉🍒🥝"].flatMap(x=>[x,x]));let op=[],ok=0,bz=0,mv=0;
+  const draw=()=>mset(`<div class="note">Harakat: ${mv}</div><div class="mb" style="grid-template-columns:repeat(4,1fr)">${e.map((x,i)=>`<button class="c" data-i="${i}" style="${BT}font-size:30px">${ok&(1<<i)||op.includes(i)?x:"❓"}</button>`).join("")}</div>`);
+  M.onclick=ev=>{const b=ev.target.closest("[data-i]");if(!b||bz)return;const i=+b.dataset.i;if(op.includes(i)||ok&(1<<i))return;op.push(i);draw();
+    if(op.length===2){mv++;bz=1;mtimer(()=>{if(e[op[0]]===e[op[1]])ok|=(1<<op[0])|(1<<op[1]);op=[];bz=0;draw();if(ok===65535)end("Hammasini topdingiz! "+mv+" harakat",1)},700)}};
+  draw()};
+GM.gxo=()=>{const b=Array(9).fill(""),L=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];let bz=0;
+  const w=p=>L.some(l=>l.every(i=>b[i]===p));
+  const draw=()=>mset(`<div class="note">Siz ❌, kompyuter ⭕</div><div class="mb" style="grid-template-columns:repeat(3,1fr)">${b.map((x,i)=>`<button class="c" data-i="${i}" style="${BT}font-size:40px">${x}</button>`).join("")}</div>`);
+  const fin=()=>{if(w("❌")){end("Siz yutdingiz!",1);return 1}if(w("⭕")){end("Yutqazdingiz",0);return 1}if(b.every(x=>x)){end("Durang",0);return 1}};
+  const pick=()=>{for(const p of["⭕","❌"])for(const l of L){const v=l.map(i=>b[i]);if(v.filter(x=>x===p).length===2&&v.includes(""))return l[v.indexOf("")]}
+    if(!b[4])return 4;const f=b.map((x,i)=>x?-1:i).filter(i=>i>=0);return f[rnd(f.length)]};
+  M.onclick=ev=>{const k=ev.target.closest("[data-i]");if(!k||over||bz)return;const i=+k.dataset.i;if(b[i])return;b[i]="❌";draw();if(fin())return;bz=1;mtimer(()=>{b[pick()]="⭕";bz=0;draw();fin()},350)};
+  draw()};
+const QZ=[["O’zbekiston poytaxti?","Toshkent","Samarqand","Buxoro","Xiva"],["Quyosh tizimidagi eng katta sayyora?","Yupiter","Mars","Yer","Venera"],["1 soatda necha daqiqa bor?","60","100","30","90"],["Eng katta okean?","Tinch okean","Atlantika","Hind","Shimoliy Muz"],["Alisher Navoiy qaysi shaharda tug’ilgan?","Hirot","Toshkent","Samarqand","Xiva"],["Suvning kimyoviy formulasi?","H2O","CO2","O2","NaCl"],["Haftada necha kun bor?","7","5","6","8"],["Qaysi hayvon eng tez yuguradi?","Gepard","Sher","Ot","Bo’ri"],["Registon qaysi shaharda?","Samarqand","Buxoro","Xiva","Qarshi"],["1 kilometr necha metr?","1000","100","500","10000"],["Eng baland tog’ qaysi?","Everest","Elbrus","Alp","Tyan-Shan"],["Qaysi oy eng qisqa?","Fevral","Aprel","Iyun","Sentabr"]];
+GM.gqz=()=>{const q=shuf(QZ.slice()).slice(0,5);let i=0,ok=0,bz=0;
+  const draw=()=>{const[t,...o]=q[i];mset(`<div class="note">Savol ${i+1}/5 · To’g’ri: ${ok} (4 ta kerak)</div><h2>${t}</h2><div class="mb" style="grid-template-columns:1fr">${shuf(o.map((x,k)=>[x,k])).map(([x,k])=>`<button class="btn" data-k="${k}">${x}</button>`).join("")}</div>`)};
+  M.onclick=ev=>{const b=ev.target.closest("[data-k]");if(!b||bz||over)return;bz=1;const good=b.dataset.k==="0";if(good)ok++;b.style.background=good?"#3ddc97":"#ff4d6d";
+    mtimer(()=>{bz=0;i++;if(i>=5)end("To’g’ri javoblar: "+ok+"/5",ok>=4);else draw()},700)};
+  draw()};
+GM.gmine=()=>{const K=10;let mines=null,rv=Array(64).fill(0),fl=Array(64).fill(0),fm=0;
+  const nb=i=>{const r=i>>3,c=i&7,o=[];for(let a=-1;a<2;a++)for(let b=-1;b<2;b++){const y=r+a,x=c+b;if((a||b)&&y>=0&&x>=0&&y<8&&x<8)o.push(y*8+x)}return o};
+  const cnt=i=>nb(i).filter(j=>mines[j]).length;
+  const draw=()=>mset(`<button class="btn" id="mf" style="max-width:400px">${fm?"🚩 Bayroq rejimi":"⛏ Ochish rejimi"} (almashtirish)</button><div class="mb" style="grid-template-columns:repeat(8,1fr);gap:3px">${rv.map((v,i)=>{let s="background:#2b356e",x="";if(v){s="background:#0f1536";x=mines[i]?"💣":cnt(i)||""}else if(fl[i])x="🚩";return`<button class="c" data-i="${i}" style="${BT}color:var(--gold);font-size:16px;border-radius:6px;${s}">${x}</button>`}).join("")}</div>`);
+  const open=i=>{if(rv[i]||fl[i])return;rv[i]=1;if(!mines[i]&&!cnt(i))nb(i).forEach(open)};
+  M.onclick=ev=>{if(ev.target.id==="mf"){fm^=1;draw();return}const k=ev.target.closest("[data-i]");if(!k||over)return;const i=+k.dataset.i;
+    if(fm){if(!rv[i])fl[i]^=1;draw();return}
+    if(!mines){mines=Array(64).fill(0);let n=0;while(n<K){const j=rnd(64);if(j!==i&&!mines[j]&&!nb(i).includes(j)){mines[j]=1;n++}}}
+    open(i);if(mines[i]){rv=rv.map(()=>1);draw();end("Portladi! 💥",0);return}
+    draw();if(rv.filter(x=>x).length===64-K)end("Maydonni tozaladingiz!",1)};
+  draw()};
+GM.gpz=()=>{const t=[1,2,3,4,5,6,7,8,0];let e=8,mv=0;const sw=i=>{[t[i],t[e]]=[t[e],t[i]];e=i};
+  const nbs=i=>[i%3?i-1:-1,i%3<2?i+1:-1,i>2?i-3:-1,i<6?i+3:-1].filter(x=>x>=0);
+  for(let k=0;k<80;k++){const o=nbs(e);sw(o[rnd(o.length)])}
+  const draw=()=>mset(`<div class="note">Raqamlarni 1 dan 8 gacha tartiblang. Harakat: ${mv}</div><div class="mb" style="grid-template-columns:repeat(3,1fr)">${t.map((v,i)=>`<button class="c" data-i="${i}" style="${BT}color:var(--gold);font-size:34px;${v?"":"background:transparent"}">${v||""}</button>`).join("")}</div>`);
+  M.onclick=ev=>{const k=ev.target.closest("[data-i]");if(!k||over)return;const i=+k.dataset.i;if(nbs(e).includes(i)){sw(i);mv++;draw();if(t.every((v,j)=>v===(j+1)%9))end("Yechdingiz! "+mv+" harakat",1)}};
+  draw()};
+GM.gmole=()=>{let sc=0,m=-1,tl=20;
+  const draw=()=>mset(`<div class="note">⏱ ${tl} s · Ball: ${sc} (12 ta kerak)</div><div class="mb" style="grid-template-columns:repeat(3,1fr)">${[...Array(9)].map((_,i)=>`<button class="c" data-i="${i}" style="${BT}font-size:40px">${i===m?"🐹":"🕳"}</button>`).join("")}</div>`);
+  M.onpointerdown=ev=>{const k=ev.target.closest("[data-i]");if(k&&+k.dataset.i===m){sc++;m=-1;draw()}};
+  mtimer(()=>{m=rnd(9);draw()},700,1);
+  mtimer(()=>{tl--;if(tl<=0){stopMini();end("Vaqt tugadi! Ball: "+sc,sc>=12)}else draw()},1000,1);draw()};
+GM.gsim=()=>{const C=["#ff4d6d","#3ddc97","#4cc9f0","#ffd166"];let sq=[],pi=0,lock=1;
+  const draw=(h=-1)=>mset(`<div class="note">Ketma-ketlikni eslab qoling. Uzunlik: ${sq.length}/6</div><div class="mb" style="grid-template-columns:repeat(2,1fr)">${C.map((c,i)=>`<button class="c" data-i="${i}" style="${BT}aspect-ratio:1.4;background:${c};opacity:${h===i?1:.45}"></button>`).join("")}</div>`);
+  const show=()=>{lock=1;pi=0;sq.push(rnd(4));let k=0;const st=()=>{if(k>=sq.length){draw();lock=0;return}draw(sq[k]);mtimer(()=>{draw();k++;mtimer(st,250)},450)};mtimer(st,500)};
+  M.onclick=ev=>{const b=ev.target.closest("[data-i]");if(!b||lock||over)return;const i=+b.dataset.i;draw(i);mtimer(()=>draw(),150);
+    if(i!==sq[pi]){end("Xato! Uzunlik: "+(sq.length-1),0);return}
+    pi++;if(pi===sq.length){if(sq.length>=6){end("Ajoyib xotira!",1);return}lock=1;mtimer(show,600)}};
+  draw();show()};
+GM.gmath=()=>{let sc=0,tl=45,q;
+  const nq=()=>{const a=2+rnd(18),b=2+rnd(12),op=["+","-","×"][rnd(3)],ans=op==="+"?a+b:op==="-"?a-b:a*b,s=new Set([ans]);while(s.size<4)s.add(ans+rnd(21)-10);q={t:a+" "+op+" "+b+" = ?",ans,o:shuf([...s])}};nq();
+  const nt=()=>"⏱ "+tl+" s · To’g’ri: "+sc+" (10 ta kerak)";
+  const draw=()=>mset(`<div class="note">${nt()}</div><h2 style="font-size:34px">${q.t}</h2><div class="mb" style="grid-template-columns:repeat(2,1fr)">${q.o.map(v=>`<button class="btn" data-v="${v}">${v}</button>`).join("")}</div>`);
+  M.onclick=ev=>{const b=ev.target.closest("[data-v]");if(!b||over)return;if(+b.dataset.v===q.ans)sc++;nq();draw()};
+  mtimer(()=>{tl--;if(tl<=0){stopMini();end("Vaqt tugadi! To’g’ri: "+sc,sc>=10)}else M.firstElementChild.textContent=nt()},1000,1);draw()};
+GM.grps=()=>{let u=0,c=0;const E=["🪨","✂️","📄"];
+  const draw=(m="Tanlang!")=>mset(`<div class="note">Siz ${u} : ${c} Kompyuter (3 gacha)</div><div style="font-size:22px;text-align:center;min-height:32px">${m}</div><div class="mb" style="grid-template-columns:repeat(3,1fr)">${E.map((x,i)=>`<button class="c" data-i="${i}" style="${BT}font-size:38px">${x}</button>`).join("")}</div>`);
+  M.onclick=ev=>{const k=ev.target.closest("[data-i]");if(!k||over)return;const i=+k.dataset.i,j=rnd(3),r=(i-j+3)%3;
+    if(r===2)u++;else if(r===1)c++;draw(E[i]+" vs "+E[j]);
+    if(u===3)end("Siz yutdingiz!",1);else if(c===3)end("Yutqazdingiz",0)};
+  draw()};
+
 // ---- Turnir ----
 const INIT=()=>(tg&&tg.initData)||"";
 const esc=t=>String(t).replace(/[&<>"']/g,c=>"&#"+c.charCodeAt(0)+";");
