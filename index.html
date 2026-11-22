@@ -80,7 +80,7 @@ canvas{width:min(94vw,360px);aspect-ratio:1;background:#0a0f26;border-radius:12p
 <section class="screen" id="snake" hidden>
   <canvas id="cv" width="360" height="360"></canvas>
   <div id="joy"><div id="knob"></div></div>
-  <div class="note" id="snNote">Ekranni bosib suring: joystik chiqadi, ilon shu tomonga buriladi. 🍎🍇🍊 Mevalarni yeng, ilon kattalashadi. Dushman ilonning tanasiga tegsangiz o’lasiz. Maqsad: 40 uzunlik.</div>
+  <div class="note" id="snNote">Ekranni bosib suring: joystik chiqadi, ilon shu tomonga buriladi. 🍎🍇🍊 Mevalarni yeng, ilon kattalashadi. Dushman ilonning tanasiga tegsangiz o’lasiz. Cheksiz o’yin: eng uzun ilon bo’ling!</div>
 </section>
 
 <section class="screen" id="checkers" hidden>
@@ -145,12 +145,13 @@ $("back").onclick=()=>go("menu");$("tomenu").onclick=()=>go("menu");$("again").o
 function end(t,win){over=true;const w=win?((cur==="checkers"||cur==="chess")?[2,5,8,12][LV[cur]]:cur==="mini"?3:WIN):0;if(w)add(w);$("mtxt").textContent=t+(w?" +"+w+" tanga":"");$("modal").hidden=false}
 
 // ---- Ilon (Slither) ----
-let S=null;const W=1400,COL=["#3ddc97","#ff6b6b","#6bb5ff","#ffc928","#c77dff","#ff9f1c"],FC=["🍎","🍇","🍊","🍓","🍌","🍉"],COL2=["#2bb87a","#d94f4f","#4f93d6","#d9a81f","#a45ed1","#d98417"];
+let S=null;const W=2000,COL=["#3ddc97","#ff6b6b","#6bb5ff","#ffc928","#c77dff","#ff9f1c","#00c2a8","#ff7aa2","#9bdb4d","#8d99ff"],FC=["🍎","🍇","🍊","🍓","🍌","🍉"],COL2=["#2bb87a","#d94f4f","#4f93d6","#d9a81f","#a45ed1","#d98417","#00907d","#d9577e","#74a83a","#6a74d6"];
 function stopSnake(){if(S&&S.t){clearInterval(S.t);S.t=null}}
-function mkSn(me,i){const x=200+Math.random()*(W-400),y=200+Math.random()*(W-400),a=Math.random()*6.28,s={x,y,a,ta:a,len:10,me,col:COL[i%6],c2:COL2[i%6],alive:true,h:[]};for(let k=0;k<33;k++)s.h.push({x:x-Math.cos(a)*k*3,y:y-Math.sin(a)*k*3});return s}
+const NM=["Aziz","Bobur","Dilnoza","Eldor","Farhod","Gulnora","Hasan","Jasur","Kamola"];
+function mkSn(me,i){const x=200+Math.random()*(W-400),y=200+Math.random()*(W-400),a=Math.random()*6.28,s={x,y,a,ta:a,len:10,me,name:me?"Siz":NM[(i-1)%9],col:COL[i%10],c2:COL2[i%10],alive:true,h:[]};for(let k=0;k<33;k++)s.h.push({x:x-Math.cos(a)*k*3,y:y-Math.sin(a)*k*3});return s}
 function segs(s){const o=[],n=Math.floor(s.len);for(let i=0;i<n;i++){const p=s.h[i*3];if(p)o.push(p)}return o}
 function addF(x,y){S.f.push({x:x==null?30+Math.random()*(W-60):x,y:y==null?30+Math.random()*(W-60):y,c:FC[Math.random()*6|0]})}
-function snakeStart(){showSnNote();S={t:null,time:0,rs:0,n:1,sn:[mkSn(1,0)],f:[]};for(let i=1;i<=5;i++)S.sn.push(mkSn(0,i));for(let i=0;i<130;i++)addF();
+function snakeStart(){showSnNote();S={t:null,time:0,rs:0,n:1,sn:[mkSn(1,0)],f:[]};for(let i=1;i<=9;i++)S.sn.push(mkSn(0,i));for(let i=0;i<220;i++)addF();
   const m0=S.sn[0];for(let i=0;i<14;i++){const a=Math.random()*6.28,d=50+Math.random()*140;addF(m0.x+Math.cos(a)*d,m0.y+Math.sin(a)*d)}
   const cv=$("cv"),dpr=Math.min(window.devicePixelRatio||1,3);cv.width=Math.round(cv.clientWidth*dpr)||360;cv.height=Math.round(cv.clientHeight*dpr)||360;S.k=cv.width/360;S.vh=360*cv.height/cv.width;draw();S.t=setInterval(tick,33)}
 function bot(s){
@@ -175,12 +176,11 @@ function tick(){
     for(let j=0;j<S.sn.length&&!dead;j++){if(j===i)continue;dead=sg[j].some(p=>Math.hypot(p.x-s.x,p.y-s.y)<12)}
     if(dead){s.alive=false;sg[i].forEach((p,k)=>{if(k%2===0)addF(p.x+Math.random()*10-5,p.y+Math.random()*10-5)})}});
   S.sn=S.sn.filter(s=>s.alive||s.me);
-  if(S.sn.filter(s=>!s.me).length<5&&++S.rs>40){S.rs=0;S.sn.push(mkSn(0,++S.n))}
+  if(S.sn.filter(s=>!s.me).length<9&&++S.rs>40){S.rs=0;S.sn.push(mkSn(0,++S.n))}
   const me=S.sn[0],L=Math.floor(me.len);
-  if(!me.alive){stopSnake();if(TM)tourSubmit(L);end("Yutqazdingiz. Uzunlik: "+L,0);return}
+  if(!me.alive){stopSnake();if(TM)tourSubmit(L);const bs=store.get("sbest",0);if(L>bs)store.set("sbest",L);end((L>=40?"Zo’r o’yin! ":"Yutqazdingiz. ")+"Uzunlik: "+L+" · Rekord: "+Math.max(L,bs),L>=40?1:0);return}
   if(TM&&S.time>=90000){stopSnake();tourSubmit(L);end("Vaqt tugadi! Uzunlik: "+L,0);return}
-  if(!TM&&L>=40){stopSnake();end("Siz yutdingiz! Uzunlik: "+L,1);return}
-  draw();
+    draw();
 }
 function draw(){
   const c=$("cv").getContext("2d"),me=S.sn[0],VS=360,VH=S.vh,tm=S.time/1000;
@@ -210,9 +210,12 @@ function draw(){
       c.fillStyle="#111";c.beginPath();c.arc(px+ex*hr*.12,py+ey*hr*.12,hr*.17,0,7);c.fill()}
   });
   c.restore();
-  c.fillStyle="rgba(0,0,0,.5)";c.fillRect(8,8,TM?200:170,26);
+  c.fillStyle="rgba(0,0,0,.5)";c.fillRect(8,8,TM?200:150,26);
   c.fillStyle="#fff";c.font="bold 14px system-ui";c.textAlign="left";
-  c.fillText("🍎 Uzunlik: "+Math.floor(me.len)+(TM?"   ⏱ "+Math.max(0,90-(S.time/1000|0))+" s":"/40"),14,22);
+  const rk=S.sn.filter(s=>s.alive).sort((a,b)=>b.len-a.len),mi=rk.indexOf(me),rows=rk.slice(0,5);if(mi>4)rows.push(me);
+  c.fillText("🍎 "+Math.floor(me.len)+" · #"+(mi+1)+"/"+rk.length+(TM?" · ⏱ "+Math.max(0,90-(S.time/1000|0))+"s":""),14,22);
+  c.fillStyle="rgba(0,0,0,.5)";c.fillRect(VS-126,8,118,rows.length*15+8);c.font="bold 11px system-ui";
+  rows.forEach((s,k)=>{c.fillStyle=s.me?"#ffc928":"#fff";c.fillText((rk.indexOf(s)+1)+". "+s.name+"  "+Math.floor(s.len),VS-120,22+k*15)});
 }
 const cvs=$("cv");
 function aim(e){if(!S||over)return;const r=cvs.getBoundingClientRect();S.sn[0].ta=Math.atan2(e.clientY-(r.top+r.height/2),e.clientX-(r.left+r.width/2))}
