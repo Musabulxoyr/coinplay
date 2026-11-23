@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>CoinPlay</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+<script src='//libtl.com/sdk.js' data-zone='12331603' data-sdk='show_12331603'></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 <style>
 :root{--bg:#0e1330;--card:#1a2150;--gold:#ffc928;--gold2:#ff9d00;--text:#f4f6ff;--muted:#9aa4d6;--ok:#3ddc97}
@@ -101,7 +101,7 @@ canvas{width:min(94vw,360px);aspect-ratio:1;background:#0a0f26;border-radius:12p
 <div id="modal" hidden><div><span id="mtxt"></span><button class="btn ok" id="again">Qayta o’ynash</button><button class="btn" id="tomenu">Menyu</button></div></div>
 
 <script>
-const BLOCK_ID="61096",REWARD=10,WIN=5,DAILY=20;
+const REWARD=10,WIN=5,DAILY=20;
 const tg=window.Telegram&&Telegram.WebApp;if(tg){try{tg.ready();tg.expand();}catch(e){}}
 const inTG=!!(tg&&tg.initData);
 const $=id=>document.getElementById(id);
@@ -116,15 +116,14 @@ function say(t){$("msg").textContent=t}
 function render(){$("bal").textContent=balance}
 function add(n){balance+=n;save();render()}
 
-// Reklama SDK faqat Telegram ichida ishga tushadi (brauzerda xato oynasi chiqmasligi uchun)
-let AdC=null;
-if(inTG){try{AdC=window.Adsgram.init({blockId:BLOCK_ID})}catch(e){console.log("Adsgram init:",e)}}
+// Reklama (Monetag, zona 12331603) faqat Telegram ichida ishlaydi
 function showAd(ok){
   if(!inTG){say("Reklama faqat Telegram ichida ishlaydi.");return}
   if(adsToday>=DAILY){say("Bugungi reklama limiti tugadi.");return}
-  if(!AdC){say("Reklama hozircha mavjud emas. Keyinroq urinib ko’ring.");return}
+  const f=window.show_12331603;
+  if(typeof f!=="function"){say("Reklama hozircha mavjud emas. Keyinroq urinib ko’ring.");return}
   const bs=[$("adBoost")];bs.forEach(b=>b.disabled=true);
-  AdC.show().then(()=>{adsToday++;ok();save();render()}).catch(r=>{console.log("Adsgram:",r);say("Hozir reklama yo’q. Keyinroq urinib ko’ring.")}).finally(()=>bs.forEach(b=>b.disabled=false));
+  Promise.resolve().then(()=>f()).then(()=>{adsToday++;ok();save();render()}).catch(r=>{console.log("Monetag:",r);say("Hozir reklama yo’q. Keyinroq urinib ko’ring.")}).finally(()=>bs.forEach(b=>b.disabled=false));
 }
 $("adBoost").onclick=()=>showAd(()=>{balance+=REWARD;say("+"+REWARD+" tanga!")});
 
