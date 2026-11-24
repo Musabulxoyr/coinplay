@@ -58,6 +58,11 @@ canvas{width:min(94vw,360px);aspect-ratio:1;background:#0a0f26;border-radius:12p
 .sk .dot{width:13px;height:13px;border-radius:50%}
 .sk .nm{font-size:12px;font-weight:800;text-align:center;line-height:1.15;min-height:28px;display:flex;align-items:center}
 .sk .pr{font-size:12px;color:var(--gold);font-weight:800}
+.tabs{display:flex;gap:8px;width:100%;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:0 0 auto;padding:9px 13px;border:0;border-radius:99px;background:var(--card);color:var(--muted);font-weight:800;font-size:13px;white-space:nowrap}
+.tabs button.on{background:var(--gold);color:#3a2600}
+.skbtn{width:100%;max-width:400px;padding:11px;border:0;border-radius:12px;background:rgba(255,201,40,.12);color:var(--gold);font-weight:800;font-size:14px}
 .sk button{border:0;border-radius:9px;padding:8px 4px;width:100%;font-weight:800;font-size:12px;background:var(--gold);color:#3a2600}
 .sk button:disabled{background:#3a4370;color:var(--muted)}
 .tp{display:flex;justify-content:space-between;align-items:center;width:100%;padding:12px 14px;border:0;border-radius:14px;background:var(--card);color:var(--text);font-weight:800;text-align:left}
@@ -91,12 +96,13 @@ input.code{width:100%;padding:13px;border-radius:12px;border:1px solid #2b356e;b
     <button class="btn" data-m="gdice">🎲 Zar o’yini</button><button class="btn" data-m="gspeed">⚡ Chaqmoq</button>
   </div>
   <button class="btn ok" id="adBoost">▶ Reklama ko’rib +6 tanga olish</button>
-  <div class="note">Reklama ixtiyoriy: barcha o’yinlar reklamasiz ham ishlaydi. Reklamani oxirigacha ko’rsangiz +6 tanga beriladi. Kichik o’yinlarda g’alaba uchun +1, shashka/shaxmatda darajaga qarab +1…+5 tanga. Tangalarni skinlar sotib olishga sarflang.</div>
+  <div class="note">Reklama ixtiyoriy: barcha o’yinlar reklamasiz ham ishlaydi. Reklamani oxirigacha ko’rsangiz +6 tanga beriladi. Kichik o’yinlarda g’alaba uchun +1, shashka/shaxmatda darajaga qarab +1…+5 tanga. Har bir o’yinning o’z skinlari bor: o’yin ichidagi «🎨» tugmasidan ham tanlash mumkin.</div>
 </section>
 
 <section class="screen" id="shop" hidden>
   <h2>🛍 Skinlar do’koni</h2>
-  <div class="note">G’alabalardan yig’ilgan tangalarga yangi ko’rinish oling. Tanlangan skin butun o’yin rangini va ilonning rangini o’zgartiradi.</div>
+  <div class="note">Avval o’yinni tanlang — keyin shu o’yinning skinlari chiqadi. «Umumiy» esa butun ilova rangini o’zgartiradi.</div>
+  <div class="tabs" id="shopTabs"></div>
   <div class="skinGrid" id="skinGrid"></div>
 </section>
 
@@ -113,22 +119,25 @@ input.code{width:100%;padding:13px;border-radius:12px;border:1px solid #2b356e;b
 <section class="screen" id="snake" hidden>
   <canvas id="cv" width="360" height="360"></canvas>
   <div id="joy"><div id="knob"></div></div>
+  <button class="skbtn" data-gskin="snake">🎨 Ilon skinlari</button>
   <div class="note" id="snNote">Ekranni bosib suring: joystik chiqadi, ilon shu tomonga buriladi. 🍎🍇🍊 Mevalarni yeng, ilon kattalashadi. Dushman ilonning tanasiga tegsangiz o’lasiz. Cheksiz o’yin: eng uzun ilon bo’ling!</div>
 </section>
 
 <section class="screen" id="checkers" hidden>
   <div class="lv" data-g="checkers"><button data-lv="0">Oson</button><button data-lv="1">O’rta</button><button data-lv="2">Qiyin</button><button data-lv="3">Usta</button></div>
   <div class="board" id="ckBoard"></div>
+  <button class="skbtn" data-gskin="checkers">🎨 Doska skinlari</button>
   <div class="note">Siz oq donalar (pastda). Urish majburiy, dona orqaga ham uradi. Damka (♛) uzoqqa yuradi va uzoqdan uradi. G’alaba: Oson +1, O’rta +2, Qiyin +3, Usta +5 tanga.</div>
 </section>
 
 <section class="screen" id="chess" hidden>
   <div class="lv" data-g="chess"><button data-lv="0">Oson</button><button data-lv="1">O’rta</button><button data-lv="2">Qiyin</button><button data-lv="3">Usta</button></div>
   <div class="board" id="chBoard"></div>
+  <button class="skbtn" data-gskin="chess">🎨 Doska skinlari</button>
   <div class="note">Siz oq donalar (pastda). G’alaba: Oson +1, O’rta +2, Qiyin +3, Usta +5 tanga.</div>
 </section>
 
-<section class="screen" id="mini" hidden><div id="mbox" style="width:100%;display:flex;flex-direction:column;gap:10px;align-items:center"></div></section>
+<section class="screen" id="mini" hidden><div id="mbox" style="width:100%;display:flex;flex-direction:column;gap:10px;align-items:center"></div><button class="skbtn" id="miniSkin">🎨 Shu o’yinning skinlari</button></section>
 
 <div id="msg"></div>
 <div id="modal" hidden><div><span id="mtxt"></span><button class="btn ok" id="again">Qayta o’ynash</button><button class="btn" id="tomenu">Menyu</button></div></div>
@@ -164,7 +173,7 @@ let cur="menu",over=false,TM=false;
 const LV=Object.assign({checkers:1,chess:1},store.get("lv",{}));
 function markLv(){document.querySelectorAll(".lv").forEach(d=>d.querySelectorAll("button").forEach(b=>b.classList.toggle("on",+b.dataset.lv===LV[d.dataset.g])))}
 document.querySelectorAll(".lv button").forEach(b=>b.onclick=()=>{LV[b.parentNode.dataset.g]=+b.dataset.lv;store.set("lv",LV);go(cur)});
-const starters={tour:tourInit,snake:snakeStart,checkers:ckInit,chess:chInit,mini:()=>GM[MG](),shop:shopInit,topup:tpInit};
+const starters={tour:tourInit,snake:snakeStart,checkers:ckInit,chess:chInit,mini:()=>{GM[MG]();$("miniSkin").hidden=!GS[MG]},shop:shopInit,topup:tpInit};
 function go(n,t){
   TM=!!t;stopSnake();stopMini();cur=n;over=false;$("modal").hidden=true;say("");
   ["menu","tour","snake","checkers","chess","mini","shop","topup"].forEach(s=>$(s).hidden=s!==n);
@@ -180,7 +189,7 @@ function end(t,win){over=true;const w=win?((cur==="checkers"||cur==="chess")?[1,
 let S=null;const W=2000,COL=["#3ddc97","#ff6b6b","#6bb5ff","#ffc928","#c77dff","#ff9f1c","#00c2a8","#ff7aa2","#9bdb4d","#8d99ff"],FC=["🍎","🍇","🍊","🍓","🍌","🍉"],COL2=["#2bb87a","#d94f4f","#4f93d6","#d9a81f","#a45ed1","#d98417","#00907d","#d9577e","#74a83a","#6a74d6"];
 function stopSnake(){if(S&&S.t){clearInterval(S.t);S.t=null}}
 const NM=["Aziz","Bobur","Dilnoza","Eldor","Farhod","Gulnora","Hasan","Jasur","Kamola"];
-function mkSn(me,i){const x=200+Math.random()*(W-400),y=200+Math.random()*(W-400),a=Math.random()*6.28,s={x,y,a,ta:a,len:me?10:16,sp:me?3:3.15+Math.random()*.2,me,name:me?"Siz":NM[(i-1)%9],col:me?PC:COL[i%10],c2:me?PC2:COL2[i%10],alive:true,h:[]};for(let k=0;k<60;k++)s.h.push({x:x-Math.cos(a)*k*3,y:y-Math.sin(a)*k*3});return s}
+function mkSn(me,i){const T=gSkin("snake"),x=200+Math.random()*(W-400),y=200+Math.random()*(W-400),a=Math.random()*6.28,s={x,y,a,ta:a,len:me?10:16,sp:me?3:3.15+Math.random()*.2,me,name:me?"Siz":NM[(i-1)%9],col:me?(T.a||PC):COL[i%10],c2:me?(T.b||PC2):COL2[i%10],alive:true,h:[]};for(let k=0;k<60;k++)s.h.push({x:x-Math.cos(a)*k*3,y:y-Math.sin(a)*k*3});return s}
 function segs(s){const o=[],n=Math.floor(s.len);for(let i=0;i<n;i++){const p=s.h[i*3];if(p)o.push(p)}return o}
 function addF(x,y){S.f.push({x:x==null?30+Math.random()*(W-60):x,y:y==null?30+Math.random()*(W-60):y,c:FC[Math.random()*6|0]})}
 function snakeStart(){showSnNote();S={t:null,time:0,rs:0,n:1,sn:[mkSn(1,0)],f:[]};for(let i=1;i<=9;i++)S.sn.push(mkSn(0,i));for(let i=0;i<150;i++)addF();
@@ -298,10 +307,10 @@ function applyM(b,m){
 }
 function doMove(m){return applyM(B,m)?{r:m.r2,c:m.c2}:null}
 function ckDraw(){
-  let h="";const tg2=sel?(chain?pm(B,chain.r,chain.c).filter(x=>x.x):allm(B,1)).filter(m=>m.r===sel[0]&&m.c===sel[1]):[];
+  const K=gSkin("checkers");let h="";const tg2=sel?(chain?pm(B,chain.r,chain.c).filter(x=>x.x):allm(B,1)).filter(m=>m.r===sel[0]&&m.c===sel[1]):[];
   for(let r=0;r<8;r++)for(let c=0;c<8;c++){
     const p=B[r][c],hint=tg2.some(m=>m.r2===r&&m.c2===c),s=sel&&sel[0]===r&&sel[1]===c;
-    h+=`<div class="sq ${(r+c)%2?"dark":"light"} ${s?"sel":""} ${hint?"hint":""}" data-r="${r}" data-c="${c}">${p?`<div class="ck ${p>0?"p":"a"}">${Math.abs(p)===2?"♛":""}</div>`:""}</div>`;
+    h+=`<div class="sq ${s?"sel":""} ${hint?"hint":""}" style="background:${(r+c)%2?K.d:K.l}" data-r="${r}" data-c="${c}">${p?`<div class="ck" style="background:${p>0?K.w:K.k};color:${K.c}">${Math.abs(p)===2?"♛":""}</div>`:""}</div>`;
   }
   $("ckBoard").innerHTML=h;
 }
@@ -355,10 +364,10 @@ let G,cs=null;
 const U={p:"♟",r:"♜",n:"♞",b:"♝",q:"♛",k:"♚"},V={p:1,n:3,b:3,r:5,q:9,k:0};
 function chInit(){G=new Chess();cs=null;chDraw()}
 function chDraw(){
-  const b=G.board(),legal=cs?G.moves({square:cs,verbose:true}).map(m=>m.to):[];let h="";
+  const b=G.board(),legal=cs?G.moves({square:cs,verbose:true}).map(m=>m.to):[],K=gSkin("chess");let h="";
   for(let r=0;r<8;r++)for(let c=0;c<8;c++){
     const sq="abcdefgh"[c]+(8-r),p=b[r][c];
-    h+=`<div class="sq ${(r+c)%2?"dark":"light"} ${sq===cs?"sel":""} ${legal.includes(sq)?"hint":""}" data-sq="${sq}">${p?`<span class="pc ${p.color}">${U[p.type]}</span>`:""}</div>`;
+    h+=`<div class="sq ${sq===cs?"sel":""} ${legal.includes(sq)?"hint":""}" style="background:${(r+c)%2?K.d:K.l}" data-sq="${sq}">${p?`<span class="pc ${p.color}">${U[p.type]}</span>`:""}</div>`;
   }
   $("chBoard").innerHTML=h;
 }
@@ -426,9 +435,9 @@ let MG="g2048",MT=[];const M=$("mbox"),GM={},rnd=n=>Math.random()*n|0,shuf=a=>a.
 function stopMini(){MT.forEach(x=>{clearInterval(x);clearTimeout(x)});MT=[];M.onclick=M.onpointerdown=M.onpointerup=null}
 function mtimer(f,ms,rp){const x=(rp?setInterval:setTimeout)(f,ms);MT.push(x);return x}
 const BT='border:0;color:inherit;';
-GM.g2048=()=>{let g=Array(16).fill(0),sx=0,sy=0;
+GM.g2048=()=>{let g=Array(16).fill(0),sx=0,sy=0;const T=gSkin("g2048");
   const add=()=>{const e=g.map((v,i)=>v?-1:i).filter(i=>i>=0);if(e.length)g[e[rnd(e.length)]]=Math.random()<.9?2:4};
-  const draw=()=>mset(`<div class="note">Barmoq bilan suring. 256 ga yeting!</div><div class="mb" style="grid-template-columns:repeat(4,1fr)">${g.map(v=>`<div class="c" style="background:${v?`hsl(${45-Math.log2(v)*3},85%,${68-Math.log2(v)*3}%)`:"#141a40"};color:#2a1a00;font-size:${v>999?17:v>99?22:26}px">${v||""}</div>`).join("")}</div>`);
+  const draw=()=>mset(`<div class="note">Barmoq bilan suring. 256 ga yeting!</div><div class="mb" style="grid-template-columns:repeat(4,1fr)">${g.map(v=>`<div class="c" style="background:${v?`hsl(${T.h-Math.log2(v)*3},85%,${68-Math.log2(v)*3}%)`:T.e};color:#2a1a00;font-size:${v>999?17:v>99?22:26}px">${v||""}</div>`).join("")}</div>`);
   const line=a=>{const r=a.filter(x=>x),o=[];for(let i=0;i<r.length;i++){if(r[i]===r[i+1]){o.push(r[i]*2);i++}else o.push(r[i])}while(o.length<4)o.push(0);return o};
   const mv=d=>{const old=g.join();for(let i=0;i<4;i++){const ix=[0,1,2,3].map(j=>d<2?i*4+j:j*4+i);if(d%2)ix.reverse();const r=line(ix.map(k=>g[k]));ix.forEach((k,j)=>g[k]=r[j])}
     if(g.join()===old)return;add();draw();
@@ -437,18 +446,19 @@ GM.g2048=()=>{let g=Array(16).fill(0),sx=0,sy=0;
   M.onpointerdown=e=>{sx=e.clientX;sy=e.clientY};
   M.onpointerup=e=>{if(over)return;const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.max(Math.abs(dx),Math.abs(dy))<24)return;mv(Math.abs(dx)>Math.abs(dy)?(dx>0?1:0):(dy>0?3:2))};
   add();add();draw()};
-GM.gmem=()=>{const e=shuf([..."🍎🍇🍊🍓🍌🍉🍒🥝"].flatMap(x=>[x,x]));let op=[],ok=0,bz=0,mv=0;
-  const draw=()=>mset(`<div class="note">Harakat: ${mv}</div><div class="mb" style="grid-template-columns:repeat(4,1fr)">${e.map((x,i)=>`<button class="c" data-i="${i}" style="${BT}font-size:30px">${ok&(1<<i)||op.includes(i)?x:"❓"}</button>`).join("")}</div>`);
+GM.gmem=()=>{const e=shuf([..."🍎🍇🍊🍓🍌🍉🍒🥝"].flatMap(x=>[x,x])),K=gSkin("gmem");let op=[],ok=0,bz=0,mv=0;
+  const draw=()=>mset(`<div class="note">Harakat: ${mv}</div><div class="mb" style="grid-template-columns:repeat(4,1fr)">${e.map((x,i)=>`<button class="c" data-i="${i}" style="${BT}font-size:30px;background:${K.a};color:${K.b}">${ok&(1<<i)||op.includes(i)?x:"❓"}</button>`).join("")}</div>`);
   M.onclick=ev=>{const b=ev.target.closest("[data-i]");if(!b||bz)return;const i=+b.dataset.i;if(op.includes(i)||ok&(1<<i))return;op.push(i);draw();
     if(op.length===2){mv++;bz=1;mtimer(()=>{if(e[op[0]]===e[op[1]])ok|=(1<<op[0])|(1<<op[1]);op=[];bz=0;draw();if(ok===65535)end("Hammasini topdingiz! "+mv+" harakat",1)},700)}};
   draw()};
-GM.gxo=()=>{const b=Array(9).fill(""),L=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];let bz=0;
+GM.gxo=()=>{const K=gSkin("gxo"),X="X",O="O",b=Array(9).fill(""),L=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];let bz=0;
   const w=p=>L.some(l=>l.every(i=>b[i]===p));
-  const draw=()=>mset(`<div class="note">Siz ❌, kompyuter ⭕</div><div class="mb" style="grid-template-columns:repeat(3,1fr)">${b.map((x,i)=>`<button class="c" data-i="${i}" style="${BT}font-size:40px">${x}</button>`).join("")}</div>`);
-  const fin=()=>{if(w("❌")){end("Siz yutdingiz!",1);return 1}if(w("⭕")){end("Yutqazdingiz",0);return 1}if(b.every(x=>x)){end("Durang",0);return 1}};
-  const pick=()=>{for(const p of["⭕","❌"])for(const l of L){const v=l.map(i=>b[i]);if(v.filter(x=>x===p).length===2&&v.includes(""))return l[v.indexOf("")]}
+  const sym=x=>x===X?`<span style="color:${K.a}">✖</span>`:x===O?`<span style="color:${K.b}">◯</span>`:"";
+  const draw=()=>mset(`<div class="note">Siz ✖, kompyuter ◯</div><div class="mb" style="grid-template-columns:repeat(3,1fr)">${b.map((x,i)=>`<button class="c" data-i="${i}" style="${BT}font-size:40px">${sym(x)}</button>`).join("")}</div>`);
+  const fin=()=>{if(w(X)){end("Siz yutdingiz!",1);return 1}if(w(O)){end("Yutqazdingiz",0);return 1}if(b.every(x=>x)){end("Durang",0);return 1}};
+  const pick=()=>{for(const p of[O,X])for(const l of L){const v=l.map(i=>b[i]);if(v.filter(x=>x===p).length===2&&v.includes(""))return l[v.indexOf("")]}
     if(!b[4])return 4;const f=b.map((x,i)=>x?-1:i).filter(i=>i>=0);return f[rnd(f.length)]};
-  M.onclick=ev=>{const k=ev.target.closest("[data-i]");if(!k||over||bz)return;const i=+k.dataset.i;if(b[i])return;b[i]="❌";draw();if(fin())return;bz=1;mtimer(()=>{b[pick()]="⭕";bz=0;draw();fin()},350)};
+  M.onclick=ev=>{const k=ev.target.closest("[data-i]");if(!k||over||bz)return;const i=+k.dataset.i;if(b[i])return;b[i]=X;draw();if(fin())return;bz=1;mtimer(()=>{b[pick()]=O;bz=0;draw();fin()},350)};
   draw()};
 const QB={
 "➗ Matematika":["7 × 8 = ?|56|54|48|64","Uchburchak ichki burchaklari yig’indisi?|180°|90°|360°|270°","√144 = ?|12|14|11|16","Aylana uzunligi formulasi?|2πr|πr²|4πr|πr","0,5 ning oddiy kasr ko’rinishi?|1/2|1/4|2/3|1/5","Eng kichik tub son?|2|1|3|0","200 ning 15 foizi necha?|30|15|20|25","Tomoni 5 bo’lgan kvadratning yuzi?|25|20|10|15"],
@@ -460,22 +470,40 @@ const QB={
 "📖 Ona tili va adabiyot":["O’zbek alifbosida nechta unli tovush harfi bor?|6|5|8|4","«Xamsa» asarining muallifi?|Alisher Navoiy|Bobur|Cho’lpon|Fitrat","«O’tkan kunlar» romani muallifi?|Abdulla Qodiriy|Cho’lpon|Oybek|G’afur G’ulom","«Kecha va kunduz» romani muallifi?|Cho’lpon|Abdulla Qodiriy|Oybek|Hamza","Sifat nimani bildiradi?|Predmet belgisini|Harakatni|Sonni|Predmet nomini","Ot qanday savolga javob beradi?|Kim? Nima?|Qanday?|Nima qildi?|Nechta?","«Boburnoma» muallifi?|Zahiriddin Muhammad Bobur|Alisher Navoiy|Amir Temur|Mirzo Ulug’bek"],
 "🕌 Islom tarixi":["Payg’ambarimiz (s.a.v.) tug’ilgan yil qanday nomlanadi?|Fil yili|Hijrat yili|G’am yili|Fath yili","Birinchi vahiy qaysi g’orda nozil bo’lgan?|Hiro|Savr|Uhud|Safo","Bobosi Abdulmuttalibdan so’ng Payg’ambarimiz (s.a.v.) kimning tarbiyasida bo’lgan?|Amakisi Abu Tolib|Amakisi Hamza|Amakisi Abbos|Tog’asi","Payg’ambarimizning (s.a.v.) birinchi turmush o’rtog’i?|Xadicha binti Xuvaylid|Oisha binti Abu Bakr|Hafsa binti Umar|Zaynab binti Jahsh","Madina shahrining Islomdan oldingi nomi?|Yasrib|Taif|Xaybar|Tabuk","Hijrat milodiy qaysi yilda sodir bo’lgan?|622|610|632|570","Madinaga kelgach dastlab qurilgan masjid?|Quba|Masjidun-Nabaviy|Masjidul Aqso|Masjidul Haram","Payg’ambarimiz Madinada tuzgan umumiy kelishuv hujjati qanday ataladi?|Madina vasiqasi|Hudaybiya bitimi|Aqaba bay’ati|Hijrat bitimi","Islom tarixidagi birinchi yirik jang?|Badr|Uhud|Xandaq|Hunayn","Badr jangi qaysi hijriy yilda bo’lgan?|2-yil|1-yil|5-yil|8-yil","Uhud jangida shahid bo’lgan Payg’ambarimizning amakisi?|Hamza|Abbos|Abu Tolib|Abu Lahab","Xandaq (Ahzob) jangi qaysi shahar atrofida bo’lgan?|Madina|Makka|Taif|Quddus","Hudaybiya sulhi kimlar o’rtasida tuzilgan?|Musulmonlar va Quraysh|Musulmonlar va Rimliklar|Musulmonlar va Forslar|Quraysh va Habash","Makka fathi qaysi hijriy yilda bo’lgan?|8-yil|6-yil|10-yil|4-yil","Payg’ambarimiz (s.a.v.) qaysi milodiy yilda vafot etganlar?|632|622|661|610","Islomda birinchi muazzin kim?|Bilol Habashiy|Salmon Forsiy|Abu Zar|Anas","Isro voqeasida Payg’ambarimiz Makkadan qaysi masjidgacha olib borilgan?|Masjidul Aqso|Masjidun-Nabaviy|Quba|Masjidul Haram","Hijriy yil hisobini joriy etgan xalifa?|Umar ibn Xattob|Abu Bakr|Usmon|Ali","Qur’on mushafi nusxalarini shaharlarga yuborgan xalifa?|Usmon ibn Affon|Abu Bakr|Umar|Ali","Quddus 638-yilda qaysi xalifa davrida fath etilgan?|Umar ibn Xattob|Abu Bakr|Usmon|Ali","Umaviylar xalifaligining poytaxti?|Damashq|Bag’dod|Qohira|Madina","Abbosiylar xalifaligining poytaxti?|Bag’dod|Damashq|Qohira|Kufa","711-yilda Ispaniyaga yurishni boshlagan qo’mondon?|Tariq ibn Ziyod|Xolid ibn Validd|Amr ibn Os|Qutayba ibn Muslim","Qutayba ibn Muslim qaysi hududni fath etishi bilan mashhur?|Movarounnahr|Misr|Andalusiya|Shom","Salohiddin Ayyubiy 1187-yilda qaysi shaharni qaytarib olgan?|Quddus|Damashq|Qohira|Istanbul","Konstantinopol (Istanbul) qaysi yilda fath etilgan?|1453|1258|1071|1517","Konstantinopolni fath etgan sulton?|Muhammad Fotih|Sulaymon Qonuniy|Salim I|Boyazid I","Buxoroda tug’ilgan buyuk muhaddis?|Imom Buxoriy|Imom Muslim|Imom Termiziy|Imom Molik","Imom Termiziy qaysi mintaqadan chiqqan?|Termiz|Buxoro|Samarqand|Xiva","Imom Moturidiy qaysi shahar atrofida yashab ijod qilgan?|Samarqand|Buxoro|Toshkent|Xiva","Naqshbandiya tariqati namoyandasi Bahouddin Naqshband qaysi shahar yaqinida yashagan?|Buxoro|Samarqand|Xiva|Termiz","Ibn Sinoning mashhur tibbiy asari?|Tib qonunlari|Mezon ul-hikma|Xamsa|Boburnoma","Musulmon Ispaniyasi (Andalusiya) Umaviylar xalifaligining mashhur poytaxti?|Kordova|Madrid|Barselona|Lissabon","Tariq ibn Ziyod 711-yilda o’tgan bo’g’oz hozir qanday nomlanadi?|Gibraltar|Bosfor|Dardanell|Gormuz","Andalusiyada Umaviylar amirligiga (756) asos solgan hukmdor?|Abdurrahmon ad-Doxil|Tariq ibn Ziyod|Abdurrahmon III|Muso ibn Nusayr","Kordova xalifaligini 929-yilda e’lon qilgan hukmdor?|Abdurrahmon III|Abdurrahmon I|Hakam II|Hishom II","Kordovadagi mashhur Buyuk masjid hozir qanday nom bilan ataladi?|Mesquita|Alhambra|Giralda|Eskorial","Granadadagi mashhur musulmon qasri?|Alhambra|Aya-Sofiya|Topqapi|Dolmabaxche","Andalusiyadagi so’nggi musulmon davlati?|Granada amirligi|Kordova xalifaligi|Sevilya taifasi|Almoravidlar","Granada qaysi yilda tushib, Andalusiyada musulmonlar hukmronligi tugagan?|1492|1453|1212|1236","Granadaning so’nggi amiri (ispancha nomi Boabdil)?|Abu Abdulloh Muhammad XII|Yusuf I|Muhammad I|Ibn al-Ahmar","Ibn Rushd Yevropada qanday nom bilan mashhur bo’lgan?|Averroes|Avicenna|Alhazen|Geber","Kordovada tug’ilgan buyuk faylasuf va tabib?|Ibn Rushd|Ibn Sino|Al-Farobiy|Al-Xorazmiy","Andalusiya qaysi qit’adagi yarim orolda joylashgan?|Pireney yarim oroli (Yevropa)|Arabiston yarim oroli|Anadolu yarim oroli|Hindiston yarim oroli","Tariq ibn Ziyodni Ispaniyaga yuborgan Muso ibn Nusayr qaysi mintaqa noibi edi?|Shimoliy Afrika (Ifriqiya)|Misr|Shom|Yaman","Kordova xalifaligi qaysi asrda mayda taifa davlatlariga parchalangan?|XI asr|VIII asr|XIV asr|XV asr","Andalusiyani birlashtirgan Almoravidlar qaysi mintaqadan kelgan?|Shimoliy Afrika (Marokash)|Misr|Arabiston|Eron","1085-yilda Alfonso VI qaysi shaharni egallagan?|Toledo|Kordova|Granada|Sevilya","1212-yildagi Las-Navas-de-Tolosa jangida qaysi sulola mag’lub bo’lgan?|Almohadlar|Almoravidlar|Umaviylar|Nasriylar","Kordova 1236-yilda qaysi qirollik tomonidan egallangan?|Kastiliya|Aragon|Portugaliya|Navarra","Granada amirligi qaysi sulola hukmronligida bo’lgan?|Nasriylar|Umaviylar|Almohadlar|Abbosiylar","Granada amirligiga asos solgan hukmdor?|Muhammad ibn al-Ahmar|Boabdil|Yusuf I|Muhammad V","Alhambra saroyi qaysi shahar yaqinida joylashgan?|Granada|Kordova|Sevilya|Toledo","Granadani egallagan Ispaniya hukmdorlari?|Ferdinand va Izabella|Filipp va Meri|Karl va Izabella|Alfonso va Elizabet","Kordova xalifasi Hakam II qaysi ishi bilan mashhur?|Ulkan kutubxona to’plagani|Dengiz floti qurgani|Granadani fath etgani|Qohirani qurgani","«Muqaddima» muallifi Ibn Xaldun qaysi shaharda tug’ilgan?|Tunis|Kordova|Granada|Fes","Jarrohlikning otasi sanalgan az-Zahroviy qaysi shaharda yashagan?|Kordova|Bag’dod|Qohira|Samarqand","Madinat az-Zahro saroy shahri qaysi shahar yaqinida qurilgan?|Kordova|Granada|Sevilya|Valensiya","«Rekonkista» so’zining ma’nosi?|Qayta fath|Mudofaa|Hijrat|Bitim","Sevilyadagi mashhur Xiralda minorasi dastlab nimaning minorasi bo’lgan?|Masjid|Saroy|Qal’a|Madrasa","Andalusiya arab tilida qanday atalgan?|Al-Andalus|Al-Hijoz|Ash-Shom|Al-Mag’rib","An’anaga ko’ra Tariq ibn Ziyod qaysi xalqdan chiqqan?|Berberlar|Forslar|Turklar|Kurdlar","Usmonlilar davlatiga asos solgan shaxs?|Usmon G’oziy|Orxon G’oziy|Murod I|Boyazid I","Istanbul fath etilgunga qadar Usmonlilar poytaxti bo’lgan shahar?|Edirna|Anqara|Qohira|Damashq","Istanbulni fath etgan sulton fathda necha yoshda edi?|21|30|40|25","Fathdan keyin Aya-Sofiya soborining vazifasi qanday o’zgargan?|Masjidga aylantirilgan|Saroyga aylantirilgan|Kutubxonaga aylantirilgan|Buzib tashlangan","Boyazid I Amir Temurga qaysi jangda mag’lub bo’lgan?|Anqara jangi|Mohach jangi|Chaldiron jangi|Varna jangi","Anqara jangi qaysi yilda bo’lgan?|1402|1389|1453|1526","Salim I 1517-yilda qaysi sultonlikni bosib olib, Misrni qo’shib olgan?|Mamluklar sultonligi|Safaviylar|Ayyubiylar|Saljuqiylar","Sulaymon Qonuniy qaysi asrda hukmronlik qilgan?|XVI asr|XIV asr|XVIII asr|XX asr","Sulaymoniya masjidini qurgan buyuk Usmonli me’mori?|Mimar Sinon|Mehmed Aga|Brunelleski|Ibn Tuluniy","Usmonlilarning mashhur doimiy piyoda qo’shini?|Yangicharlar (yeniçeri)|Mamluklar|Saljuqlar|Gazneviylar","1526-yildagi Mohach jangida Usmonlilar qaysi davlat qo’shinini mag’lub etgan?|Vengriya|Avstriya|Polsha|Venetsiya","Usmonli sultonligi qaysi yilda bekor qilingan?|1922|1918|1923|1924","Topqapi saroyi qaysi shaharda joylashgan?|Istanbul|Anqara|Bursa|Edirna","Usmonlilar davlati qaysi asr oxirida paydo bo’lgan?|XIII asr oxiri|X asr|XV asr|XVII asr","Usmonlilarning dastlabki poytaxti?|Bursa|Edirna|Istanbul|Konya","Edirnani poytaxt qilgan sulton?|Murod I|Usmon I|Boyazid I|Mehmed I","1389-yildagi Kosovo jangi qaysi sulton davrida bo’lgan?|Murod I|Boyazid I|Mehmed II|Salim I","Konstantinopol qamalida Usmonlilar qaysi qurolni qo’llagan?|Ulkan to’plar|Manjaniq|Nayza|Kema","Konstantinopol fathida Vizantiyaning so’nggi imperatori?|Konstantin XI|Yustinian|Geraklius|Aleksey I","Istanbul fathi qaysi oyda bo’lgan?|May|Aprel|Iyun|Mart","Salim I qanday laqab bilan mashhur?|Yovuz|Qonuniy|Fotih|G’oziy","1514-yildagi Chaldiron jangida Salim I kimni mag’lub etgan?|Safaviylarni|Mamluklarni|Vengriyani|Venetsiyani","Sulaymon Qonuniy 1521-yilda qaysi shaharni egallagan?|Belgrad|Vena|Budapesht|Buxarest","Sulaymon Qonuniy 1529-yilda qaysi shaharni qamal qilgan?|Vena|Parij|Rim|Madrid","Usmonlilarda sultondan keyingi bosh amaldor?|Sadr-i a’zam (buyuk vazir)|Shayxulislom|Qozi|Beylerbey","Birinchi jahon urushida Usmonlilar qaysi tomonda bo’lgan?|Markaziy davlatlar (Germaniya bilan)|Antanta|Betaraf|Rossiya bilan","Turkiya Respublikasi qaysi yilda e’lon qilingan?|1923|1922|1918|1924","1839-yilda boshlangan Usmonlilar islohotlar davri qanday ataladi?|Tanzimat|Qonuniy|Tulip davri|Hamidiya","1571-yildagi Lepanto dengiz jangida kim mag’lub bo’lgan?|Usmonlilar floti|Muqaddas Liga|Venetsiya|Ispaniya","Xayriddin Barbarossa qaysi sultonning admirali bo’lgan?|Sulaymon Qonuniy|Mehmed II|Salim II|Boyazid II","Usmonlilar Misrni qaysi yilda egallagan?|1517|1453|1526|1571"],
 "🎲 Umumiy":["O’zbekiston poytaxti?|Toshkent|Samarqand|Buxoro|Xiva","Quyosh tizimidagi eng katta sayyora?|Yupiter|Mars|Yer|Venera","1 soatda necha daqiqa bor?|60|100|30|90","Eng katta okean?|Tinch okean|Atlantika|Hind|Shimoliy Muz","Alisher Navoiy qaysi shaharda tug’ilgan?|Hirot|Toshkent|Samarqand|Xiva","Suvning kimyoviy formulasi?|H2O|CO2|O2|NaCl","Haftada necha kun bor?|7|5|6|8","Qaysi hayvon eng tez yuguradi?|Gepard|Sher|Ot|Bo’ri","Registon qaysi shaharda?|Samarqand|Buxoro|Xiva|Qarshi","1 kilometr necha metr?|1000|100|500|10000","Eng baland tog’ qaysi?|Everest|Elbrus|Alp|Tyan-Shan","Qaysi oy eng qisqa?|Fevral|Aprel|Iyun|Sentabr"]};
+// ---- Viktorina: kengaytirilgan baza (har fanga qo’shimcha savollar) ----
+const QEXT=[
+["9 × 9 = ?|81|72|99|90","144 ning yarmi nechaga teng?|72|70|64|84","1 soatda necha soniya bor?|3600|360|600|60","Uchburchakning yuzi qanday topiladi?|asos × balandlik / 2|asos × balandlik|2 × asos|π × r²","1000 ning 25 foizi nechaga teng?|250|25|100|400","Natural sonlar qaysi sondan boshlanadi?|1|0|2|-1","Eng katta ikki xonali son?|99|98|100|90","5! (besh faktorial) nechaga teng?|120|25|60|100","0,25 ni oddiy kasrda qanday yoziladi?|1/4|1/2|1/5|2/5","Kvadratning perimetri formulasi?|4a|a²|2a|a + 4","1 kilometr necha santimetr?|100 000|1000|10 000|1 000 000","2x + 6 = 14 bo’lsa, x nechaga teng?|4|6|8|10","Kubning nechta yog’i bor?|6|8|12|4","705 ni 5 ga bo’lsak necha bo’ladi?|141|151|131|145","Eng kichik natural juft son?|2|0|4|1"],
+["Quvvat qanday birlikda o’lchanadi?|Vatt|Joul|Nyuton|Paskal","Bosim qanday birlikda o’lchanadi?|Paskal|Nyuton|Vatt|Joul","Elektr qarshiligi qanday birlikda o’lchanadi?|Om|Amper|Volt|Vatt","Yorug’lik qaysi muhitda eng tez tarqaladi?|Vakuumda|Suvda|Shishada|Havoda","Massani qaysi asbob bilan o’lchaymiz?|Tarozi|Dinamometr|Termometr|Barometr","Atmosfera bosimini qaysi asbob o’lchaydi?|Barometr|Termometr|Tarozi|Voltmetr","Qattiq jismning suyuqlikka aylanishi nima deyiladi?|Erish|Qotish|Bug’lanish|Kondensatsiya","Suv 0 °C da nima bo’ladi?|Muzlaydi|Qaynaydi|Bug’lanadi|Qizib ketadi","Yorug’likning asosiy tabiiy manbai nima?|Quyosh|Oy|Ko’zgu|Linza","Muz qanday haroratda eriydi?|0 °C|100 °C|-10 °C|10 °C","Ochiq havoda tovush tezligi taxminan qancha?|340 m/s|150 m/s|1000 m/s|30 m/s","Erkin tushayotgan jismning tezligi qanday o’zgaradi?|Ortadi|Kamayadi|O’zgarmaydi|Nolga tushadi","Kuch momenti qanday birlikda o’lchanadi?|Nyuton·metr|Joul|Vatt|Paskal","Nyutonning uchinchi qonuni qanday?|Har bir ta’sirga teng va qarama-qarshi aks ta’sir bor|Jism tinch holatda qoladi|Kuch massaga teskari proporsional|Energiya yo’qolmaydi"],
+["Suv nechta kimyoviy elementdan iborat?|2|1|3|4","Kislorodning kimyoviy belgisi?|O|K|C|H","Davriy jadvaldagi birinchi element?|Vodorod|Geliy|Litiy|Uglerod","Metanning formulasi?|CH4|CO2|C2H6|H2O","Sirka kislotasining ta’mi qanday?|Nordon|Shirin|Achchiq|Befarq","Qaysi modda elektr tokini yaxshi o’tkazadi?|Mis|Shisha|Rezina|Quruq yog’och","Neft qanday agregat holatda bo’ladi?|Suyuq|Gaz|Qattiq|Plazma","Oltingugurtning kimyoviy belgisi?|S|Si|Sn|Sr","Temir zanglaganda qanday jarayon bo’ladi?|Oksidlanish|Erish|Bug’lanish|Qotish","Atomning musbat zaryadli qismi?|Proton|Elektron|Neytron|Foton","Gaz hajmi qanday birlikda o’lchanadi?|Litr|Kilogramm|Nyuton|Metr","Oshqozon sharbatida qaysi kislota bor?|Xlorid kislota|Sirka kislota|Sulfat kislota|Nitrat kislota","Osh sodasining formulasi?|NaHCO3|NaCl|NaOH|Na2CO3","Havoning taxminan 78 foizini qaysi gaz tashkil qiladi?|Azot|Kislorod|Argon|Vodorod"],
+["Qonning suyuq qismi nima deyiladi?|Plazma|Leykotsit|Eritrotsit|Trombotsit","Inson tanasidagi eng katta organ?|Teri|Jigar|O’pka|Yurak","O’simlik ildizi nima vazifani bajaradi?|Suv va mineral moddalarni yutadi|Barg hosil qiladi|Gul ochadi|Urug’ tarqatadi","Qonning nechta asosiy guruhi bor?|4|2|3|5","DNK nimani saqlaydi?|Irsiy axborotni|Suvni|Kislorodni|Ozuqani","Baliqlar qaysi organ bilan nafas oladi?|Jabraqlar|O’pka|Teri|Traxeya","Qushlarning tanasi nima bilan qoplangan?|Patlar|Jun|Tangachalar|Xitin","Asalari nima ishlab chiqaradi?|Asal|Sut|Jun|Tuxum","Umurtqali hayvonlar nechta guruhga bo’linadi?|5|3|4|6","Tuxumdan chiqib, keyin quruqlikka chiqadigan hayvon?|Qurbaqa|Ilon|Baliq|Toshbaqa","Organizmda vitamin yetishmasa nima kuzatiladi?|Kasallik kelib chiqadi|Tez o’sish|Kuchayish|Hech narsa","O’simliklarda fotosintez qaysi organda kechadi?|Bargda|Ildizda|Poyada|Gulda","Qonni tozalaydigan organ?|Buyrak|Yurak|O’pka|Taloq","Hasharotlarning tanasi nechta qismdan iborat?|3|2|4|5"],
+["Dunyodagi eng chuqur ko’l?|Baykal|Kaspiy|Orol|Viktoriya","Dunyodagi eng uzun daryo?|Nil|Amazonka|Volga|Sirdaryo","O’zbekistonning eng katta viloyati?|Navoiy|Samarqand|Buxoro|Farg’ona","Qoraqalpog’iston poytaxti?|Nukus|Urganch|Xiva|Qo’ng’irot","Xitoy poytaxti?|Pekin|Shanxay|Gonkong|Guangchjou","Eng kichik qit’a?|Avstraliya|Yevropa|Antarktida|Janubiy Amerika","Kaspiy qanday suv havzasi?|Ko’l|Okean|Daryo|Qo’ltiq","Antarktidada qanday hayvonlar yashaydi?|Pingvinlar|Sherlar|Fillar|Zebralar","Yer yuzasining taxminan necha foizi suv bilan qoplangan?|71|50|29|90","O’zbekiston janubida qaysi davlat bilan chegaradosh?|Afg’oniston|Rossiya|Qozog’iston|Qirg’iziston","Hindiston poytaxti?|Nyu-Dehli|Mumbay|Kalkutta|Dakka","AQSh poytaxti?|Vashington|Nyu-York|Chikago|Los-Anjeles","O’zbekistondagi eng uzun daryo?|Amudaryo|Sirdaryo|Zarafshon|Qashqadaryo","Dunyodagi eng baland sharshara?|Anxel|Niagara|Viktoriya|Iguasu"],
+["Amir Temur vafot etgan yil?|1405|1336|1370|1441","O’zbekiston Konstitutsiyasi qabul qilingan yil?|1992|1991|1993|1990","O’zbekiston mustaqillik e’lon qilingan yil?|1991|1990|1992|1989","Somoniylar davlatining poytaxti?|Buxoro|Samarqand|Xiva|Toshkent","Beruniy qaysi sohalarda mashhur olim?|Astronomiya va matematika|Tibbiyot|Hunarmandchilik|Musiqa","Ibn Sino qaysi soha olimi?|Tibbiyot|Astronomiya|Kimyo|Geologiya","«Layli va Majnun» asari kimniki?|Alisher Navoiy|Bobur|Abdulla Qodiriy|Fitrat","Amir Temur saltanati qaysi asrda tashkil topgan?|XIV|XIII|XV|XII","Birinchi jahon urushi qaysi yilda boshlangan?|1914|1918|1939|1905","Sovet Ittifoqi tarqalgan yil?|1991|1989|1990|1992","Bobur qaysi shaharda tug’ilgan?|Andijon|Farg’ona|Samarqand|Toshkent","O’zbekiston BMTga a’zo bo’lgan yil?|1992|1991|1993|1995","Buyuk ipak yo’li nimani bog’lagan?|Sharq va G’arbni|Shimol va Janubni|Ikki daryoni|Ikki qit’ani","O’rta Osiyodagi qadimgi davlatlardan biri?|Xorazm|Rim|Misr|Gretsiya"],
+["«Sarob» romani muallifi?|Abdulla Qahhor|Oybek|Cho’lpon|G’afur G’ulom","«Mehrobdan chayon» muallifi?|Abdulla Qodiriy|Fitrat|Oybek|Hamid Olimjon","O’zbek alifbosida nechta harf bor?|30|26|29|32","Fe’l qaysi so’z turkumi?|Harakatni bildiradi|Belgini bildiradi|Sonni bildiradi|Predmetni bildiradi","Son so’z turkumi nimani bildiradi?|Miqdorni|Harakatni|Belgini|Predmetni","«Qutlug’ qon» romani muallifi?|Oybek|Qodiriy|Cho’lpon|Qahhor","Bosh bo’laklar qaysilar?|Ega va kesim|Ega va to’ldiruvchi|Kesim va hol|Aniqlovchi va to’ldiruvchi","Sinonim nima?|Ma’nosi yaqin so’zlar|Qarama-qarshi ma’noli so’zlar|Ko’chma ma’no|Yangi so’z","Antonim nima?|Qarama-qarshi ma’noli so’zlar|Ma’nosi yaqin so’zlar|Ko’chma ma’no|Qo’shma so’z","«Alpomish» qanday asar?|Xalq dostoni|Roman|She’riy to’plam|Hikoya","«Yulduzli tunlar» romani muallifi?|Pirimqul Qodirov|Oybek|Qodiriy|Cho’lpon","Undosh tovushlar nechta?|24|6|30|18","Ot so’z turkumi qanday savollarga javob beradi?|Kim? Nima?|Qanday?|Nima qildi?|Nechta?","«O’tkan kunlar» romani qaysi asr voqealarini tasvirlaydi?|XIX asr|XVII asr|XX asr|XVI asr"],
+["Qur’on nechta suradan iborat?|114|100|120|99","Qur’onning birinchi surasi?|Fotiha|Baqara|Ixlos|Nos","Ka’ba qaysi shaharda?|Makka|Madina|Quddus|Toif","Bomdod namozining farzi nechta rak’at?|2|3|4|5","Shom namozining farzi nechta rak’at?|3|2|4|5","Haj qaysi oyda amalga oshiriladi?|Zulhijja|Ramazon|Muharram|Shavvol","Zakot nima?|Mol-mulkdan belgilangan ulushni berish|Namoz o’qish|Ro’za tutish|Haj qilish","Payg’ambarimiz (s.a.v.) qaysi shaharda vafot etganlar?|Madina|Makka|Toif|Quddus","Birinchi xalifa kim?|Abu Bakr|Umar ibn Xattob|Usmon ibn Affon|Ali ibn Abu Tolib","Qur’on qaysi tilda nozil bo’lgan?|Arab|Fors|Turk|Ibroniy","Hijriy yil hisobi qaysi voqeadan boshlanadi?|Hijratdan|Badr jangidan|Makka fathidan|Vafotdan","Kuniga nechta vaqt namoz farz?|5|3|7|6","Qibla qaysi tomonga qaratiladi?|Ka’baga|Madinaga|Shimolga|Sharqqa","Juma namozi qaysi kunda o’qiladi?|Juma|Shanba|Yakshanba|Payshanba","Ramazon oyida nima farz qilingan?|Ro’za|Haj|Zakot|Qurbonlik","Masjidun-Nabaviy qaysi shaharda?|Madina|Makka|Quddus|Toif"],
+["1 yilda nechta oy bor?|12|10|11|13","Yer Quyosh atrofida necha kunda aylanadi?|365|30|12|100","Kompyuterda matn kiritish uchun nima ishlatiladi?|Klaviatura|Monitor|Printer|Kolonka","Telefonda internetga ulanish uchun nima kerak?|Wi-Fi yoki mobil internet|Printer|Skaner|Kolonka","O’zbek milliy taomi?|Palov|Pitsa|Sushi|Gamburger","Yangi yil qaysi oyda nishonlanadi?|Yanvar|Dekabr|Mart|Iyun","Quyosh tizimida nechta sayyora bor?|8|9|7|10","Eng kichik sayyora?|Merkuriy|Mars|Venera|Yupiter","1 metr nechta santimetr?|100|10|1000|10000","O’zbekiston bayrog’ida nechta rang bor?|4|3|2|5","Muzqaymoq qayerda saqlanadi?|Muzlatgichda|Pechda|Quyoshda|Issiq suvda","Haftada nechta ish kuni bor (odatda)?|5|7|4|6","Non qayerda pishiriladi?|Tandirda|Muzlatgichda|Suvda|Qozonda","Qishda qor nimadan hosil bo’ladi?|Suv bug’idan|Tuproqdan|Qumdan|Tutundan"]
+];
+Object.keys(QB).forEach((k,i)=>{if(QEXT[i]&&QEXT[i].length)QB[k]=QB[k].concat(QEXT[i])});
 GM.gqz=()=>{
   const cats=Object.keys(QB);
   mset(`<h2>Fanni tanlang</h2><div class="g2" style="max-width:400px">${cats.map((k,i)=>`<button class="btn" data-c="${i}">${k}</button>`).join("")}</div>`);
   M.onclick=ev=>{const b=ev.target.closest("[data-c]");if(b)quiz(cats[+b.dataset.c])};
 };
 function quiz(cat){
-  const q=shuf(QB[cat].slice()).slice(0,8).map(s=>s.split("|")),n=q.length,need=Math.ceil(n*.7);let i=0,ok=0,bz=0;
-  const draw=()=>{const[t,...o]=q[i];mset(`<div class="note">${cat} · Savol ${i+1}/${n} · To’g’ri: ${ok} (${need} ta kerak)</div><h2>${t}</h2><div class="mb" style="grid-template-columns:1fr">${shuf(o.map((x,k)=>[x,k])).map(([x,k])=>`<button class="btn" data-k="${k}">${x}</button>`).join("")}</div>`)};
+  // Oxirgi o’ynalgan savollar qaytarilmaydi: hammasi tugagach baza yangilanadi.
+  const bank=QB[cat],seen=store.get("qzSeen",{}),used=seen[cat]||[];
+  let idx=bank.map((_,k)=>k).filter(k=>!used.includes(k));
+  if(idx.length<8)idx=bank.map((_,k)=>k);
+  idx=shuf(idx).slice(0,8);seen[cat]=idx;store.set("qzSeen",seen);
+  const K=gSkin("gqz"),q=idx.map(k=>bank[k].split("|")),n=q.length,need=Math.ceil(n*.7);let i=0,ok=0,bz=0;
+  const draw=()=>{const[t,...o]=q[i];mset(`<div class="note">${cat} · Savol ${i+1}/${n} · To’g’ri: ${ok} (${need} ta kerak)</div><h2>${t}</h2><div class="mb" style="grid-template-columns:1fr">${shuf(o.map((x,k)=>[x,k])).map(([x,k])=>`<button class="btn" data-k="${k}" style="background:${K.a}">${x}</button>`).join("")}</div>`)};
   M.onclick=ev=>{const b=ev.target.closest("[data-k]");if(!b||bz||over)return;bz=1;const good=b.dataset.k==="0";if(good)ok++;b.style.background=good?"#3ddc97":"#ff4d6d";
     mtimer(()=>{bz=0;i++;if(i>=n)end("To’g’ri javoblar: "+ok+"/"+n,ok>=need);else draw()},700)};
   draw();
 }
-GM.gmine=()=>{const K=10;let mines=null,rv=Array(64).fill(0),fl=Array(64).fill(0),fm=0;
+GM.gmine=()=>{const K=10;let mines=null,rv=Array(64).fill(0),fl=Array(64).fill(0),fm=0;const S=gSkin("gmine");
   const nb=i=>{const r=i>>3,c=i&7,o=[];for(let a=-1;a<2;a++)for(let b=-1;b<2;b++){const y=r+a,x=c+b;if((a||b)&&y>=0&&x>=0&&y<8&&x<8)o.push(y*8+x)}return o};
   const cnt=i=>nb(i).filter(j=>mines[j]).length;
-  const draw=()=>mset(`<button class="btn" id="mf" style="max-width:400px">${fm?"🚩 Bayroq rejimi":"⛏ Ochish rejimi"} (almashtirish)</button><div class="mb" style="grid-template-columns:repeat(8,1fr);gap:3px">${rv.map((v,i)=>{let s="background:#2b356e",x="";if(v){s="background:#0f1536";x=mines[i]?"💣":cnt(i)||""}else if(fl[i])x="🚩";return`<button class="c" data-i="${i}" style="${BT}color:var(--gold);font-size:16px;border-radius:6px;${s}">${x}</button>`}).join("")}</div>`);
+  const draw=()=>mset(`<button class="btn" id="mf" style="max-width:400px">${fm?"🚩 Bayroq rejimi":"⛏ Ochish rejimi"} (almashtirish)</button><div class="mb" style="grid-template-columns:repeat(8,1fr);gap:3px">${rv.map((v,i)=>{let s="background:"+S.a,x="";if(v){s="background:"+S.b;x=mines[i]?"💣":cnt(i)||""}else if(fl[i])x="🚩";return`<button class="c" data-i="${i}" style="${BT}color:${S.c};font-size:16px;border-radius:6px;${s}">${x}</button>`}).join("")}</div>`);
   const open=i=>{if(rv[i]||fl[i])return;rv[i]=1;if(!mines[i]&&!cnt(i))nb(i).forEach(open)};
   M.onclick=ev=>{if(ev.target.id==="mf"){fm^=1;draw();return}const k=ev.target.closest("[data-i]");if(!k||over)return;const i=+k.dataset.i;
     if(fm){if(!rv[i])fl[i]^=1;draw();return}
@@ -483,10 +511,10 @@ GM.gmine=()=>{const K=10;let mines=null,rv=Array(64).fill(0),fl=Array(64).fill(0
     open(i);if(mines[i]){rv=rv.map(()=>1);draw();end("Portladi! 💥",0);return}
     draw();if(rv.filter(x=>x).length===64-K)end("Maydonni tozaladingiz!",1)};
   draw()};
-GM.gpz=()=>{const t=[1,2,3,4,5,6,7,8,0];let e=8,mv=0;const sw=i=>{[t[i],t[e]]=[t[e],t[i]];e=i};
+GM.gpz=()=>{const t=[1,2,3,4,5,6,7,8,0];let e=8,mv=0;const K=gSkin("gpz");const sw=i=>{[t[i],t[e]]=[t[e],t[i]];e=i};
   const nbs=i=>[i%3?i-1:-1,i%3<2?i+1:-1,i>2?i-3:-1,i<6?i+3:-1].filter(x=>x>=0);
   for(let k=0;k<80;k++){const o=nbs(e);sw(o[rnd(o.length)])}
-  const draw=()=>mset(`<div class="note">Raqamlarni 1 dan 8 gacha tartiblang. Harakat: ${mv}</div><div class="mb" style="grid-template-columns:repeat(3,1fr)">${t.map((v,i)=>`<button class="c" data-i="${i}" style="${BT}color:var(--gold);font-size:34px;${v?"":"background:transparent"}">${v||""}</button>`).join("")}</div>`);
+  const draw=()=>mset(`<div class="note">Raqamlarni 1 dan 8 gacha tartiblang. Harakat: ${mv}</div><div class="mb" style="grid-template-columns:repeat(3,1fr)">${t.map((v,i)=>`<button class="c" data-i="${i}" style="${BT}color:${K.b};font-size:34px;background:${v?K.a:"transparent"}">${v||""}</button>`).join("")}</div>`);
   M.onclick=ev=>{const k=ev.target.closest("[data-i]");if(!k||over)return;const i=+k.dataset.i;if(nbs(e).includes(i)){sw(i);mv++;draw();if(t.every((v,j)=>v===(j+1)%9))end("Yechdingiz! "+mv+" harakat",1)}};
   draw()};
 GM.gmole=()=>{let sc=0,m=-1,tl=20;
@@ -494,7 +522,7 @@ GM.gmole=()=>{let sc=0,m=-1,tl=20;
   M.onpointerdown=ev=>{const k=ev.target.closest("[data-i]");if(k&&+k.dataset.i===m){sc++;m=-1;draw()}};
   mtimer(()=>{m=rnd(9);draw()},700,1);
   mtimer(()=>{tl--;if(tl<=0){stopMini();end("Vaqt tugadi! Ball: "+sc,sc>=12)}else draw()},1000,1);draw()};
-GM.gsim=()=>{const C=["#ff4d6d","#3ddc97","#4cc9f0","#ffd166"];let sq=[],pi=0,lock=1;
+GM.gsim=()=>{const C=gSkin("gsim").cs;let sq=[],pi=0,lock=1;
   const draw=(h=-1)=>mset(`<div class="note">Ketma-ketlikni eslab qoling. Uzunlik: ${sq.length}/6</div><div class="mb" style="grid-template-columns:repeat(2,1fr)">${C.map((c,i)=>`<button class="c" data-i="${i}" style="${BT}aspect-ratio:1.4;background:${c};opacity:${h===i?1:.45}"></button>`).join("")}</div>`);
   const show=()=>{lock=1;pi=0;sq.push(rnd(4));let k=0;const st=()=>{if(k>=sq.length){draw();lock=0;return}draw(sq[k]);mtimer(()=>{draw();k++;mtimer(st,250)},450)};mtimer(st,500)};
   M.onclick=ev=>{const b=ev.target.closest("[data-i]");if(!b||lock||over)return;const i=+b.dataset.i;draw(i);mtimer(()=>draw(),150);
@@ -516,19 +544,19 @@ GM.grps=()=>{let u=0,c=0;const E=["🪨","✂️","📄"];
 
 // ---- Yangi o’yinlar ----
 GM.gflap=()=>{mset('<div class="note">Bosing: qush tepaga uchadi. 5 ta quvurdan o’tsangiz g’alaba.</div><div class="fhud"><b id="fSc">🎯 0</b><span id="fP">quvur: 0/5</span></div><canvas id="fc" width="330" height="470" style="width:min(88vw,330px);height:auto;aspect-ratio:auto"></canvas>');
-  const c=$("fc").getContext("2d"),VW=330,VH=470;let y=VH/2,vy=0,ps=[],sc=0,fr=0,stop=0;
+  const FK=gSkin("gflap"),c=$("fc").getContext("2d"),VW=330,VH=470;let y=VH/2,vy=0,ps=[],sc=0,fr=0,stop=0;
   const upd=()=>{$("fSc").textContent="🎯 "+sc;$("fP").textContent="quvur: "+sc+"/5"};
   const render=()=>{c.fillStyle="#0a0f26";c.fillRect(0,0,VW,VH);
-    ps.forEach(p=>{c.fillStyle="#22305f";c.fillRect(p.x,0,54,p.h);c.fillRect(p.x,p.h+130,54,VH)});
+    ps.forEach(p=>{c.fillStyle=FK.b;c.fillRect(p.x,0,54,p.h);c.fillRect(p.x,p.h+130,54,VH)});
     c.fillStyle="rgba(255,255,255,.05)";for(let i=0;i<VH;i+=40)c.fillRect(0,i,VW,1);
     c.save();c.translate(50,y);c.rotate(Math.max(-.45,Math.min(.9,vy*.055)));
     c.shadowColor="rgba(255,209,102,.5)";c.shadowBlur=14;
-    c.fillStyle="#e0912f";c.beginPath();c.moveTo(-12,-2);c.lineTo(-26,-9);c.lineTo(-24,0);c.lineTo(-26,7);c.closePath();c.fill();
-    const bg=c.createLinearGradient(-17,-14,17,14);bg.addColorStop(0,"#ffe89a");bg.addColorStop(1,"#f0a02a");
+    c.fillStyle=FK.a;c.beginPath();c.moveTo(-12,-2);c.lineTo(-26,-9);c.lineTo(-24,0);c.lineTo(-26,7);c.closePath();c.fill();
+    const bg=c.createLinearGradient(-17,-14,17,14);bg.addColorStop(0,FK.a2);bg.addColorStop(1,FK.a);
     c.fillStyle=bg;c.beginPath();c.ellipse(0,0,18,14,0,0,7);c.fill();c.shadowBlur=0;
     c.strokeStyle="rgba(120,70,10,.5)";c.lineWidth=1.6;c.stroke();
     c.fillStyle="#fff6d8";c.beginPath();c.ellipse(-1,5.5,11,7,0,0,7);c.fill();
-    c.fillStyle="#e0912f";c.beginPath();c.ellipse(-4,2,8.5,5.5,-.3+Math.sin(fr*.45)*.22,0,7);c.fill();
+    c.fillStyle=FK.a;c.beginPath();c.ellipse(-4,2,8.5,5.5,-.3+Math.sin(fr*.45)*.22,0,7);c.fill();
     c.fillStyle="#fff";c.beginPath();c.arc(8,-5,5.4,0,7);c.fill();
     c.fillStyle="#161a33";c.beginPath();c.arc(9.8,-5,2.5,0,7);c.fill();
     c.fillStyle="#fff";c.beginPath();c.arc(11,-6.2,1,0,7);c.fill();
@@ -620,35 +648,261 @@ function applySkin(){const s=skinById(equipped),r=document.documentElement.style
   r.setProperty("--bg",s.bg);r.setProperty("--card",s.card);r.setProperty("--gold",s.gold);
   r.setProperty("--gold2",s.gold2);r.setProperty("--ok",s.ok);r.setProperty("--text",s.txt);r.setProperty("--muted",s.mut);
   PC=s.pc;PC2=s.pc2}
-function shopInit(){let h="";
-  for(const s of SKINS){const have=owned.includes(s.id),on=equipped===s.id;
-    h+=`<div class="sk ${on?"on":""}"><div class="prev" style="background:${s.bg}">`+
-      `<span class="dot" style="background:${s.gold}"></span><span class="dot" style="background:${s.pc}"></span>`+
-      `<span class="dot" style="background:${s.ok}"></span><span class="dot" style="background:${s.card};box-shadow:inset 0 0 0 1px ${s.mut}"></span></div>`+
-      `<div class="nm">${s.n}</div><div class="pr">${s.p?"🪙 "+s.p:"Bepul"}</div>`+
-      `<button data-sk="${s.id}" ${on?"disabled":""}>${on?"Kiyilgan":have?"Kiyish":"Sotib olish"}</button></div>`}
-  $("skinGrid").innerHTML=h}
-$("skinGrid").onclick=ev=>{const b=ev.target.closest("[data-sk]");if(!b||b.disabled)return;
+// Har bir o’yinning o’z skinlari. Ranglar shu o’yin ichida ishlatiladi.
+const GS={
+  snake:{n:"🐍 Ilon",list:[
+    {id:"sn-kl",n:"Klassik yashil",p:0,a:"#3ddc97",b:"#2bb87a"},
+    {id:"sn-ol",n:"Olov",p:12,a:"#ff7a3d",b:"#ff4d2d"},
+    {id:"sn-ne",n:"Neon",p:20,a:"#ff6ff2",b:"#8a4dff"},
+    {id:"sn-mu",n:"Muz",p:32,a:"#9be7ff",b:"#3aa0d8"},
+    {id:"sn-ot",n:"Oltin",p:48,a:"#ffd75e",b:"#c89000"},
+    {id:"sn-ka",n:"Kamalak",p:70,a:"#7dffc4",b:"#ff6ff2"},
+    {id:"sn-za",n:"Zahar",p:95,a:"#c6ff4d",b:"#4d7a00"},
+    {id:"sn-ko",n:"Kosmos",p:140,a:"#9db4ff",b:"#5b6bff"}
+  ]},
+  checkers:{n:"⚪ Shashka",list:[
+    {id:"ck-kl",n:"Yog’och",p:0,l:"#e8d9b5",d:"#a9774b",w:"#f4f4f4",k:"#2a2a2a",c:"#ffc928"},
+    {id:"ck-zu",n:"Zumrad",p:15,l:"#dff3e4",d:"#2f7a5c",w:"#f7fff9",k:"#12332a",c:"#7dffc4"},
+    {id:"ck-tu",n:"Tungi",p:26,l:"#5b6488",d:"#262d4a",w:"#f0f2ff",k:"#0b0f22",c:"#7fd3ff"},
+    {id:"ck-qz",n:"Qizil",p:40,l:"#f3d9d9",d:"#8b2f3a",w:"#fff5f5",k:"#3a0f16",c:"#ff9ec4"},
+    {id:"ck-qa",n:"Qadimiy",p:60,l:"#e9dcc0",d:"#7c5a34",w:"#fff6e2",k:"#2b1c0c",c:"#ffd75e"}
+  ]},
+  chess:{n:"♟ Shaxmat",list:[
+    {id:"ch-kl",n:"Yog’och",p:0,l:"#e8d9b5",d:"#a9774b"},
+    {id:"ch-zu",n:"Zumrad",p:18,l:"#dff3e4",d:"#2f7a5c"},
+    {id:"ch-tu",n:"Tungi",p:30,l:"#5b6488",d:"#262d4a"},
+    {id:"ch-ol",n:"Oltin",p:45,l:"#f3e4bd",d:"#9b7a1e"},
+    {id:"ch-ko",n:"Kosmos",p:65,l:"#b9c3ff",d:"#2a3070"}
+  ]},
+  g2048:{n:"🔢 2048",list:[
+    {id:"t2-kl",n:"Asal",p:0,h:45,e:"#141a40"},
+    {id:"t2-mo",n:"Moviy",p:10,h:210,e:"#101a3a"},
+    {id:"t2-zu",n:"Zumrad",p:18,h:145,e:"#0e2a24"},
+    {id:"t2-pu",n:"Binafsha",p:30,h:280,e:"#1c1236"},
+    {id:"t2-pi",n:"Pushti",p:45,h:330,e:"#2a1120"}
+  ]},
+  gmem:{n:"🃏 Juftini top",list:[
+    {id:"me-kl",n:"Klassik",p:0,a:"#1a2150",b:"#ffc928"},
+    {id:"me-mo",n:"Moviy",p:10,a:"#16294f",b:"#7fd3ff"},
+    {id:"me-zu",n:"Zumrad",p:18,a:"#0f3b31",b:"#7dffc4"},
+    {id:"me-pi",n:"Pushti",p:30,a:"#3d1730",b:"#ff9ec4"},
+    {id:"me-qa",n:"Qora oltin",p:45,a:"#241d10",b:"#ffd75e"}
+  ]},
+  gxo:{n:"❌ XO",list:[
+    {id:"xo-kl",n:"Klassik",p:0,a:"#ff4d6d",b:"#3ddc97"},
+    {id:"xo-mo",n:"Moviy",p:10,a:"#ff8a3d",b:"#7fd3ff"},
+    {id:"xo-ne",n:"Neon",p:20,a:"#ff6ff2",b:"#4df0ff"},
+    {id:"xo-ol",n:"Oltin",p:35,a:"#ffd75e",b:"#c89000"},
+    {id:"xo-qi",n:"Qip-qizil",p:50,a:"#ff2d55",b:"#ffe9a8"}
+  ]},
+  gmine:{n:"💣 Sapyor",list:[
+    {id:"mi-kl",n:"Klassik",p:0,a:"#2b356e",b:"#0f1536",c:"#ffc928"},
+    {id:"mi-zu",n:"Zumrad",p:12,a:"#1f5445",b:"#0a2018",c:"#7dffc4"},
+    {id:"mi-qo",n:"Qum",p:22,a:"#6b5535",b:"#2a2012",c:"#ffe9a8"},
+    {id:"mi-ne",n:"Neon",p:38,a:"#3a1470",b:"#12061f",c:"#ff6ff2"},
+    {id:"mi-mu",n:"Muz",p:52,a:"#1d4b6b",b:"#0a1c26",c:"#9be7ff"}
+  ]},
+  gpz:{n:"🧩 Pyatnashki",list:[
+    {id:"pz-kl",n:"Klassik",p:0,a:"#1a2150",b:"#ffc928"},
+    {id:"pz-mo",n:"Moviy",p:10,a:"#16294f",b:"#7fd3ff"},
+    {id:"pz-zu",n:"Zumrad",p:18,a:"#0f3b31",b:"#7dffc4"},
+    {id:"pz-ol",n:"Oltin",p:32,a:"#2e2612",b:"#ffd75e"},
+    {id:"pz-pu",n:"Binafsha",p:45,a:"#231145",b:"#ff9ec4"}
+  ]},
+  gqz:{n:"❓ Viktorina",list:[
+    {id:"qz-kl",n:"Klassik",p:0,a:"#1a2150"},
+    {id:"qz-mo",n:"Moviy",p:10,a:"#16294f"},
+    {id:"qz-zu",n:"Zumrad",p:20,a:"#0f3b31"},
+    {id:"qz-pi",n:"Pushti",p:32,a:"#3d1730"},
+    {id:"qz-ol",n:"Oltin",p:45,a:"#2e2612"}
+  ]},
+  gflap:{n:"🐦 Parvoz",list:[
+    {id:"fl-kl",n:"Sariq qush",p:0,a:"#f0a02a",a2:"#ffe89a",b:"#22305f"},
+    {id:"fl-qi",n:"Qizil qush",p:12,a:"#e04a3a",a2:"#ffb3a3",b:"#3a1414"},
+    {id:"fl-mo",n:"Moviy qush",p:22,a:"#2b8fe0",a2:"#a8dcff",b:"#0f2a4a"},
+    {id:"fl-zu",n:"Zumrad",p:35,a:"#12b77e",a2:"#a8ffd9",b:"#0a2a20"},
+    {id:"fl-tu",n:"Tungi",p:50,a:"#7a5cff",a2:"#c8bcff",b:"#120e2e"}
+  ]},
+  gsim:{n:"🎵 Simon",list:[
+    {id:"si-kl",n:"Klassik",p:0,cs:["#ff4d6d","#3ddc97","#4cc9f0","#ffd166"]},
+    {id:"si-ne",n:"Neon",p:12,cs:["#ff6ff2","#4df0ff","#c6ff4d","#ffb84d"]},
+    {id:"si-zu",n:"O’rmon",p:20,cs:["#2bb87a","#a3e635","#0ea5a4","#f7d070"]},
+    {id:"si-qi",n:"Olov",p:32,cs:["#ff2d55","#ff7a3d","#ffd75e","#c2185b"]},
+    {id:"si-tu",n:"Kosmos",p:48,cs:["#5b6bff","#9db4ff","#7fffe0","#c084fc"]}
+  ]}
+};
+let ownG=store.get("gowned",{}),eqG=store.get("gequip",{});
+function gList(g){return(GS[g]||{list:[]}).list}
+function gSkin(g){const L=gList(g);return L.find(s=>s.id===eqG[g])||L[0]||{}}
+function gHave(g,id){const L=gList(g);return!!(L.length&&L[0].id===id)||(ownG[g]||[]).includes(id)}
+function skinDots(s){const c=[];if(s.pv)c.push(...s.pv);
+  for(const k in s){if(k==="id"||k==="n"||k==="p"||k==="pv")continue;const v=s[k];
+    if(typeof v==="string"&&v[0]==="#")c.push(v);else if(Array.isArray(v))c.push(...v);else if(typeof v==="number"&&k==="h")c.push("hsl("+v+",85%,55%)")}
+  return c.slice(0,5).map(x=>`<span class="dot" style="background:${x}"></span>`).join("")}
+let shopTab="umumiy";
+function shopInit(){
+  const ks=["umumiy"].concat(Object.keys(GS));
+  $("shopTabs").innerHTML=ks.map(k=>`<button data-tab="${k}" class="${shopTab===k?"on":""}">${k==="umumiy"?"🎨 Umumiy":GS[k].n}</button>`).join("");
+  let h="";
+  if(shopTab==="umumiy"){
+    for(const s of SKINS){const have=owned.includes(s.id),on=equipped===s.id;
+      h+=`<div class="sk ${on?"on":""}"><div class="prev" style="background:${s.bg}">`+
+        `<span class="dot" style="background:${s.gold}"></span><span class="dot" style="background:${s.pc}"></span>`+
+        `<span class="dot" style="background:${s.ok}"></span><span class="dot" style="background:${s.card};box-shadow:inset 0 0 0 1px ${s.mut}"></span></div>`+
+        `<div class="nm">${s.n}</div><div class="pr">${s.p?"🪙 "+s.p:"Bepul"}</div>`+
+        `<button data-sk="${s.id}" ${on?"disabled":""}>${on?"Kiyilgan":have?"Kiyish":"Sotib olish"}</button></div>`}
+  }else{
+    const g=shopTab,L=gList(g),cur=gSkin(g).id;
+    h+=`<div class="note" style="grid-column:1/-1">${GS[g].n} skinlari — faqat shu o’yinda ko’rinadi.</div>`;
+    for(const s of L){const have=gHave(g,s.id),on=cur===s.id;
+      h+=`<div class="sk ${on?"on":""}"><div class="prev" style="background:var(--bg)">${skinDots(s)}</div>`+
+        `<div class="nm">${s.n}</div><div class="pr">${s.p?"🪙 "+s.p:"Bepul"}</div>`+
+        `<button data-gsk="${g}:${s.id}" ${on?"disabled":""}>${on?"Kiyilgan":have?"Kiyish":"Sotib olish"}</button></div>`}
+  }
+  $("skinGrid").innerHTML=h;
+  const tb=$("shopTabs").querySelector("[data-tab].on");
+  if(tb&&tb.scrollIntoView)try{tb.scrollIntoView({inline:"center",block:"nearest"})}catch(e){}
+}
+function buyGameSkin(g,id){
+  const s=gList(g).find(x=>x.id===id);if(!s)return;
+  if(!gHave(g,id)){if(balance<s.p){say("Tanga yetmaydi. Reklama ko’ring yoki balansni to’ldiring.");return}
+    balance-=s.p;(ownG[g]=ownG[g]||[]).push(id);store.set("gowned",ownG)}
+  eqG[g]=id;store.set("gequip",eqG);shopInit();render();say(s.n+" skini kiyildi ✅");
+}
+$("shopTabs").onclick=ev=>{const b=ev.target.closest("[data-tab]");if(!b)return;shopTab=b.dataset.tab;shopInit()};
+$("skinGrid").onclick=ev=>{
+  const gs=ev.target.closest("[data-gsk]");
+  if(gs){if(gs.disabled)return;const pr=gs.dataset.gsk.split(":");buyGameSkin(pr[0],pr[1]);return}
+  const b=ev.target.closest("[data-sk]");if(!b||b.disabled)return;
   const s=skinById(b.dataset.sk);
   if(!owned.includes(s.id)){if(balance<s.p){say("Tanga yetmaydi. Reklama ko’ring yoki balansni to’ldiring.");return}
     balance-=s.p;owned.push(s.id);store.set("skins",owned);say(s.n+" skini sotib olindi! Kiyildi ✅")}
   equipped=s.id;store.set("skin",equipped);applySkin();shopInit();render()};
+document.querySelectorAll("[data-gskin]").forEach(b=>b.onclick=()=>{shopTab=b.dataset.gskin;go("shop")});
+$("miniSkin").onclick=()=>{shopTab=GS[MG]?MG:"umumiy";go("shop")};
 
-// ---- Balansni to’ldirish ----
-const PACKS=[{c:100,som:9000},{c:300,som:25000},{c:700,som:50000},{c:2000,som:120000}];
+// ---- Balansni to’ldirish (to’liq oqim) ----
+const PACKS=[
+  {c:100,som:9000,b:0},
+  {c:300,som:25000,b:30},
+  {c:700,som:50000,b:100},
+  {c:2000,som:120000,b:400}
+];
 // To’lov havolalari. Bot serveri tomonidan beriladi: INV[100]="https://t.me/$..." ko’rinishida qo’shing.
+// Havola bu yerda bo’lmasa, ilova /api/topup dan so’raydi (javob: {link:"https://t.me/$..."}).
 const INV={};
 const PROMO={COINPLAY:20,JUMA2026:30,DOOST10:10,COIN100:50};
-function tpInit(){let h='<div class="note">Tanga sotib oling yoki promokodni ishlating. To’lov Telegram orqali amalga oshiriladi.</div>';
-  PACKS.forEach(p=>{h+=`<button class="tp" data-p="${p.c}"><span>🪙 ${p.c} tanga<small>${p.som.toLocaleString("ru-RU")} so’m</small></span><b>Olish →</b></button>`});
+const SOM="so’m";
+let TP_PACK=null,TP_BUSY=false;
+
+// Buyurtmalar tarixi telefonda saqlanadi (oxirgi 12 tasi).
+function tpOrders(){return store.get("tpOrders",[])}
+function tpSave(a){store.set("tpOrders",a.slice(0,12))}
+function tpAdd(o){const a=tpOrders();a.unshift(o);tpSave(a)}
+function tpPatch(id,p){const a=tpOrders(),i=a.findIndex(o=>o.id===id);if(i>=0){Object.assign(a[i],p);tpSave(a)}}
+function tpFind(id){return tpOrders().find(o=>o.id===id)}
+const fmtSom=n=>n.toLocaleString("ru-RU")+" "+SOM;
+const tpTotal=p=>p.c+(p.b||0);
+const tpPerCoin=p=>(p.som/tpTotal(p)).toFixed(1);
+const tpState=st=>st==="paid"?"✅ To’landi":st==="pending"?"⏳ Kutilmoqda":st==="cancelled"?"✕ Bekor qilindi":"✕ Amalga oshmadi";
+
+function tpInit(){TP_PACK=null;TP_BUSY=false;tpList()}
+function tpList(){
+  let h='<div class="note">Tanga sotib oling yoki promokodni ishlating. To’lov Telegram orqali amalga oshiriladi.</div>';
+  h+=`<div class="row"><span>Joriy balans</span><b>🪙 ${balance}</b></div>`;
+  const pend=tpOrders().find(o=>o.st==="pending");
+  if(pend)h+=`<button class="btn" data-act="check" data-id="${pend.id}">⏳ Kutilayotgan to’lov · ${pend.coins} tanga</button>`;
+  PACKS.forEach(p=>{
+    const bon=p.b?`<span style="display:inline-block;margin-left:6px;padding:2px 8px;border-radius:99px;background:rgba(61,220,151,.18);color:var(--ok);font-size:11px">+${p.b} bonus</span>`:"";
+    h+=`<button class="tp" data-p="${p.c}"><span>🪙 ${p.c} tanga${bon}<small>${fmtSom(p.som)}</small></span><b>Olish →</b></button>`;
+  });
+  h+=`<div class="note">Katta paketlarda 1 tanga arzonroq: ${tpPerCoin(PACKS[0])} ${SOM} → ${tpPerCoin(PACKS[PACKS.length-1])} ${SOM}</div>`;
   h+='<input class="code" id="promoIn" placeholder="PROMOKOD" autocomplete="off"><button class="btn ok" id="promoGo">Promokodni ishlatish</button><div class="note">Har bir promokod faqat bir marta ishlaydi.</div>';
-  $("tpBox").innerHTML=h}
-$("tpBox").onclick=ev=>{const b=ev.target.closest("[data-p]");
-  if(b){buyPack(+b.dataset.p);return}
-  if(ev.target.id==="promoGo")usePromo()};
-function buyPack(c){const link=INV[c];
-  if(inTG&&tg.openInvoice&&link){tg.openInvoice(link,st=>{if(st==="paid"){add(c);say("+"+c+" tanga qo’shildi!")}else if(st==="failed")say("To’lov amalga oshmadi.")});return}
-  say("To’lov tizimi hali ulanmagan. Bot egasi bilan bog’lanib, "+c+" tanga uchun to’lov havolasini so’rang.")}
+  const os=tpOrders();
+  if(os.length){
+    h+="<h2>🧾 To’lovlar tarixi</h2>";
+    h+=os.slice(0,6).map(o=>{
+      const d=new Date(o.at);
+      return `<div style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:10px 13px;background:var(--card);border-radius:10px;font-size:13px"><span>🪙 ${o.coins} tanga<small style="display:block;color:var(--muted);font-size:11px;margin-top:2px">${fmtSom(o.som)} · ${d.toLocaleDateString("ru-RU")} ${d.toTimeString().slice(0,5)}</small></span><span style="font-weight:800">${tpState(o.st)}</span></div>`;
+    }).join("");
+  }
+  $("tpBox").innerHTML=h;
+}
+function tpConfirm(c){
+  const p=PACKS.find(x=>x.c===c);if(!p)return;TP_PACK=p;TP_BUSY=false;
+  let h=`<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><h2>🪙 ${tpTotal(p)} tanga</h2><div class="note">${p.b?"Paket: "+p.c+" tanga + "+p.b+" bonus":"Tanlangan paket"}</div></div>`;
+  h+=`<div class="row"><span>To’lov summasi</span><b>${fmtSom(p.som)}</b></div>`;
+  h+=`<div class="row"><span>Hisobingizga tushadi</span><b>+${tpTotal(p)} 🪙</b></div>`;
+  h+=`<div class="row"><span>1 tanga narxi</span><b>${tpPerCoin(p)} ${SOM}</b></div>`;
+  h+=`<div class="note">Tasdiqlagach Telegram to’lov oynasi ochiladi. To’lov o’tgach tangalar avtomatik qo’shiladi.</div>`;
+  h+=`<button class="btn ok" data-act="pay">💳 To’lash · ${fmtSom(p.som)}</button>`;
+  h+=`<button class="btn" data-act="back">← Boshqa paket</button>`;
+  $("tpBox").innerHTML=h;
+}
+function tpBusy(){
+  $("tpBox").innerHTML='<div class="note" style="padding:18px 0">⏳ To’lov oynasi tayyorlanmoqda...</div><div class="bar"><div class="fill" style="width:60%"></div></div>';
+}
+function tpNoLink(p){
+  $("tpBox").innerHTML=`<div class="note" style="padding:14px 0"><h2>To’lov hali ulanmagan</h2>${tpTotal(p)} tanga uchun to’lov havolasi hali qo’shilmagan. Keyinroq urinib ko’ring yoki promokod ishlating.</div><button class="btn" data-act="back">← Orqaga</button>`;
+}
+function tpPending(o){
+  $("tpBox").innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><h2>⏳ To’lov kutilmoqda</h2><div class="note">${o.coins} tanga uchun to’lov hali tasdiqlanmadi. To’lov o’tgan bo’lsa, holatni tekshiring.</div></div>`+
+    `<div class="row"><span>Buyurtma</span><b>#${o.id}</b></div>`+
+    `<div class="row"><span>Summa</span><b>${fmtSom(o.som)}</b></div>`+
+    `<button class="btn ok" data-act="check" data-id="${o.id}">Holatni tekshirish</button>`+
+    `<button class="btn" data-act="back">← Orqaga</button>`;
+}
+function tpPaid(o){
+  $("tpBox").innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><h2>✅ To’lov qabul qilindi</h2><div class="note">+${o.coins} tanga qo’shildi. Joriy balans: 🪙 ${balance}</div></div>`+
+    `<div class="row"><span>Buyurtma</span><b>#${o.id}</b></div>`+
+    `<div class="row"><span>To’langan</span><b>${fmtSom(o.som)}</b></div>`+
+    `<button class="btn ok" data-act="play">🎮 O’ynashga o’tish</button>`+
+    `<button class="btn" data-act="back">← Balans bo’limi</button>`;
+}
+async function payPack(p){
+  if(TP_BUSY)return;
+  if(!inTG){say("To’lov faqat Telegram ichida ishlaydi.");return}
+  TP_BUSY=true;tpBusy();
+  let link=INV[p.c]||"";
+  if(!link){
+    try{const r=await tapi("/api/topup",{pack:p.c});if(r&&r.link)link=r.link;else if(r&&r.err)say(r.err)}catch(e){}
+  }
+  TP_BUSY=false;
+  const order={id:"CP"+String(Date.now()).slice(-6),coins:tpTotal(p),som:p.som,at:Date.now(),st:"pending"};
+  if(!link){tpNoLink(p);return}
+  if(!tg.openInvoice){
+    if(tg.openLink)tg.openLink(link);
+    tpAdd(order);tpPending(order);return;
+  }
+  tpAdd(order);
+  try{
+    tg.openInvoice(link,st=>{
+      if(st==="paid"){tpPatch(order.id,{st:"paid"});add(order.coins);order.st="paid";tpPaid(order)}
+      else if(st==="cancelled"){tpPatch(order.id,{st:"cancelled"});tpList();say("To’lov bekor qilindi.")}
+      else{tpPatch(order.id,{st:"failed"});tpList();say("To’lov amalga oshmadi. Yana urinib ko’ring.")}
+    });
+  }catch(e){tpNoLink(p)}
+}
+async function checkOrder(id){
+  const o=tpFind(id);if(!o){tpList();return}
+  try{
+    const r=await tapi("/api/topup/status",{id:id});
+    if(r&&r.ok){if(o.st!=="paid"){tpPatch(id,{st:"paid"});add(o.coins)}o.st="paid";tpPaid(o);return}
+    if(r&&r.err)say(r.err);
+  }catch(e){say("Server bilan aloqa yo’q. Keyinroq tekshiring.")}
+  tpPending(o);
+}
+$("tpBox").onclick=ev=>{
+  const pb=ev.target.closest("[data-p]");
+  if(pb){if(!TP_BUSY)tpConfirm(+pb.dataset.p);return}
+  if(ev.target.id==="promoGo"){usePromo();return}
+  const a=ev.target.closest("[data-act]");if(!a)return;
+  const act=a.dataset.act;
+  if(act==="pay"&&TP_PACK)payPack(TP_PACK);
+  else if(act==="check")checkOrder(a.dataset.id);
+  else if(act==="play")go("menu");
+  else{TP_BUSY=false;tpList();render()}
+};
 function usePromo(){const i=$("promoIn"),v=(i.value||"").trim().toUpperCase(),used=store.get("promos",[]);
   if(!v){say("Promokodni yozing.");return}
   if(used.includes(v)){say("Bu promokod allaqachon ishlatilgan.");return}
@@ -657,5 +911,6 @@ function usePromo(){const i=$("promoIn"),v=(i.value||"").trim().toUpperCase(),us
 applySkin();
 render();
 </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"edd0c47c6a254954a191049eb4eb9b16","r":1,"spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
