@@ -979,7 +979,7 @@ function paintHead(){
   if(!RM)return;
   const oppN=RM.names[RM.seat===1?1:0]||"";
   const role=RM.seat===1?"1-o’yinchi":"2-o’yinchi";
-  const stt=RM.state.o?("Natija: "+resTxt()):myTurn()?"Sizning yurishingiz 👇":oppN?"Raqibning yurishi ⏳":"Do’stingiz kutilmoqda ⏳";
+  const stt=RM.state.o?("Natija: "+resTxt()):myTurn()?"Sizning yurishingiz 👇":oppN?"Raqibning yurishi ⏳":(RM.pub?"Raqib qidirilmoqda ⏳":"Raqib kutilmoqda ⏳");
   $("onHead").innerHTML=`<b style="color:var(--gold)">${MPT[RM.game]}</b> · xona kodi: <b>${RM.code}</b><br>Siz: ${esc(MYN)} (${role}) · raqib: ${oppN?esc(oppN):"kutilmoqda..."}<br>${stt}`;
 }
 function boardBox(){const bd=$("onBoard");bd.style.background="transparent";return bd}
@@ -1041,6 +1041,7 @@ async function pollNow(){
     if(r.seats!==RM.seats||r.names[0]!==RM.names[0]||r.names[1]!==RM.names[1]){RM.seats=r.seats;RM.names=r.names;ch=true}
     if(r.ver!==RM.ver){RM.ver=r.ver;RM.state=r.state;ch=true}
     if(ch)onDraw();
+    if(RM.pub&&RM.seats>=2&&!RM.said){RM.said=1;$("onNote").textContent="Raqib topildi: "+(RM.names[RM.seat===1?1:0]||"o’yinchi")+" — o’yin boshlandi! Kod: "+RM.code}
   }catch(e){
     if(/topilmadi|eskirgan|Ruxsat/.test(mpErr(e))){stopPoll();RM=null;$("onNote").textContent="Xona yopildi. Menyuga qaytib yangi xona yarating."}
   }
@@ -1065,6 +1066,18 @@ async function joinRoom(code){
     $("onNote").textContent="Xonaga qo’shildingiz! Kod: "+r.code;
   }catch(e){onMsg(mpErr(e))}
 }
+async function findRandom(game){
+  onMsg("Raqib qidirilmoqda...");
+  try{
+    const st=NEWST[game]();
+    const r=await mpq("/api/room/random",{game,name:MYN,state:st});
+    RM={code:r.code,token:r.token,seat:r.seat,game:r.game,ver:r.ver,state:r.state,seats:r.seat===2?2:1,names:r.names||[MYN,""],pub:1};
+    go("onplay");onDraw();startPoll();
+    $("onNote").textContent=r.seat===2
+      ? "Raqib topildi: "+(RM.names[0]||"o’yinchi")+" — o’yin boshlandi! Kod: "+r.code
+      : "Raqib qidirilmoqda ⏳ — shu ekranda kuting. Kimdir «Tasodifiy raqib»ni bossa, o’yin o’zi boshlanadi. Kod: "+r.code;
+  }catch(e){onMsg(mpErr(e))}
+}
 function onInit(){
   mpLeave();
   const box=$("onBox");
@@ -1073,13 +1086,16 @@ function onInit(){
     <div class="g3">${Object.keys(NEWST).map(k=>`<button class="btn ok" data-new="${k}">➕ ${MPT[k]}</button>`).join("")}</div>
     <input class="code" id="onCode" maxlength="4" placeholder="KOD" autocomplete="off">
     <button class="btn" id="onJoin">🔑 Xonaga qo’shilish</button>
-    <div class="note" id="onMsg"></div>`;
+    <div class="note" id="onMsg"></div>
+    <div class="note">Raqibingiz yo’qmi? 🎲 <b>Tasodifiy raqib</b>ni bosing — ilovada hozir kutib turgan o’yinchi bo’lsa, darhol juftlashasiz. Kod yozish shart emas.</div>
+    <div class="g3">${Object.keys(NEWST).map(k=>`<button class="btn" data-rand="${k}">🎲 ${MPT[k]}</button>`).join("")}</div>`;
   $("onJoin").onclick=()=>{
     const v=($("onCode").value||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
     if(v.length!==4){onMsg("4 xonali kodni kiriting (masalan A7K2)");return}
     joinRoom(v);
   };
   box.querySelectorAll("[data-new]").forEach(b=>b.onclick=()=>newRoom(b.dataset.new));
+  box.querySelectorAll("[data-rand]").forEach(b=>b.onclick=()=>findRandom(b.dataset.rand));
 }
 $("onCopy").onclick=async()=>{
   if(!RM)return;
