@@ -82,6 +82,7 @@ input.code{width:100%;padding:13px;border-radius:12px;border:1px solid #2b356e;b
     <button class="btn ok" data-g="topup">💳 Balansni to’ldirish</button>
     <button class="btn" data-g="shop">🛍 Skinlar do’koni</button>
   </div>
+  <button class="btn" data-g="online">🌐 Do’st bilan o’ynash</button>
   <button class="btn" data-g="tour">🏆 Juma turniri</button>
   <button class="btn" data-g="snake">🐍 Ilon (kompyuterga qarshi)</button>
   <button class="btn" data-g="checkers">⚪ Shashka (kompyuterga qarshi)</button>
@@ -125,19 +126,33 @@ input.code{width:100%;padding:13px;border-radius:12px;border:1px solid #2b356e;b
 
 <section class="screen" id="checkers" hidden>
   <div class="lv" data-g="checkers"><button data-lv="0">Oson</button><button data-lv="1">O’rta</button><button data-lv="2">Qiyin</button><button data-lv="3">Usta</button></div>
+  <div class="lv" data-g2="checkers"><button data-p2="0">🤖 Kompyuter</button><button data-p2="1">👥 Ikki kishi</button></div>
   <div class="board" id="ckBoard"></div>
   <button class="skbtn" data-gskin="checkers">🎨 Doska skinlari</button>
-  <div class="note">Siz oq donalar (pastda). Urish majburiy, dona orqaga ham uradi. Damka (♛) uzoqqa yuradi va uzoqdan uradi. G’alaba: Oson +1, O’rta +2, Qiyin +3, Usta +5 tanga.</div>
+  <div class="note">Siz oq donalar (pastda). Urish majburiy, dona orqaga ham uradi. Damka (♛) uzoqqa yuradi va uzoqdan uradi. G’alaba: Oson +1, O’rta +2, Qiyin +3, Usta +5 tanga. «Ikki kishi» rejimida tanga berilmaydi.</div>
 </section>
 
 <section class="screen" id="chess" hidden>
   <div class="lv" data-g="chess"><button data-lv="0">Oson</button><button data-lv="1">O’rta</button><button data-lv="2">Qiyin</button><button data-lv="3">Usta</button></div>
+  <div class="lv" data-g2="chess"><button data-p2="0">🤖 Kompyuter</button><button data-p2="1">👥 Ikki kishi</button></div>
   <div class="board" id="chBoard"></div>
   <button class="skbtn" data-gskin="chess">🎨 Doska skinlari</button>
-  <div class="note">Siz oq donalar (pastda). G’alaba: Oson +1, O’rta +2, Qiyin +3, Usta +5 tanga.</div>
+  <div class="note">Siz oq donalar (pastda). G’alaba: Oson +1, O’rta +2, Qiyin +3, Usta +5 tanga. «Ikki kishi» rejimida tanga berilmaydi.</div>
 </section>
 
 <section class="screen" id="mini" hidden><div id="mbox" style="width:100%;display:flex;flex-direction:column;gap:10px;align-items:center"></div><button class="skbtn" id="miniSkin">🎨 Shu o’yinning skinlari</button></section>
+
+<section class="screen" id="online" hidden>
+  <h2>🌐 Do’st bilan o’ynash</h2>
+  <div id="onBox" style="width:100%;display:flex;flex-direction:column;gap:10px"></div>
+</section>
+
+<section class="screen" id="onplay" hidden>
+  <div class="note" id="onHead"></div>
+  <div class="board" id="onBoard"></div>
+  <button class="skbtn" id="onCopy">📋 Kodni nusxalash</button>
+  <div class="note" id="onNote"></div>
+</section>
 
 <div id="msg"></div>
 <div id="modal" hidden><div><span id="mtxt"></span><button class="btn ok" id="again">Qayta o’ynash</button><button class="btn" id="tomenu">Menyu</button></div></div>
@@ -176,8 +191,9 @@ document.querySelectorAll(".lv button").forEach(b=>b.onclick=()=>{LV[b.parentNod
 const starters={tour:tourInit,snake:snakeStart,checkers:ckInit,chess:chInit,mini:()=>{GM[MG]();$("miniSkin").hidden=!GS[MG]},shop:shopInit,topup:tpInit};
 function go(n,t){
   TM=!!t;stopSnake();stopMini();cur=n;over=false;$("modal").hidden=true;say("");
-  ["menu","tour","snake","checkers","chess","mini","shop","topup"].forEach(s=>$(s).hidden=s!==n);
+  ["menu","tour","snake","checkers","chess","mini","shop","topup","online","onplay"].forEach(s=>$(s).hidden=s!==n);
   $("back").hidden=n==="menu";
+  if(n!=="onplay")mpLeave();
   if(starters[n])starters[n]();markLv();
 }
 document.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>go(b.dataset.g));
@@ -315,14 +331,18 @@ function ckDraw(){
   $("ckBoard").innerHTML=h;
 }
 $("ckBoard").onclick=e=>{
-  const q=e.target.closest(".sq");if(!q||over||turn!==1)return;
+  const q=e.target.closest(".sq");if(!q||over)return;
+  const two=!!P2.checkers;if(!two&&turn!==1)return;
   const r=+q.dataset.r,c=+q.dataset.c;
-  if(B[r][c]>0&&!chain){sel=[r,c]}
+  if(Math.sign(B[r][c])===turn&&!chain){sel=[r,c]}
   else if(sel){
-    const mv=chain?pm(B,chain.r,chain.c).filter(x=>x.x):allm(B,1);
+    const mv=chain?pm(B,chain.r,chain.c).filter(x=>x.x):allm(B,turn);
     const m=mv.find(x=>x.r===sel[0]&&x.c===sel[1]&&x.r2===r&&x.c2===c);
-    if(m){chain=doMove(m);sel=chain?[chain.r,chain.c]:null;
-      if(!chain){turn=-1;ckDraw();if(!allm(B,-1).length){end("Siz yutdingiz!",1);return}setTimeout(ckAI,500);return}}
+    if(m){const mover=turn;chain=doMove(m);sel=chain?[chain.r,chain.c]:null;
+      if(!chain){turn=-mover;ckDraw();
+        if(!allm(B,turn).length){end(two?(mover===1?"Oqlar yutdi!":"Qoralar yutdi!"):(mover===1?"Siz yutdingiz!":"Yutqazdingiz"),two?0:mover===1);return}
+        if(!two)setTimeout(ckAI,500);
+        return}}
   }
   ckDraw();
 };
@@ -372,15 +392,19 @@ function chDraw(){
   $("chBoard").innerHTML=h;
 }
 function chEnd(){
-  if(G.in_checkmate()){end(G.turn()==="b"?"Siz yutdingiz!":"Yutqazdingiz",G.turn()==="b");return true}
+  const two=!!P2.chess;
+  if(G.in_checkmate()){
+    if(two){end(G.turn()==="b"?"Oqlar yutdi!":"Qoralar yutdi!",0);return true}
+    end(G.turn()==="b"?"Siz yutdingiz!":"Yutqazdingiz",G.turn()==="b");return true}
   if(G.game_over()){end("Durang",0);return true}
   return false;
 }
 $("chBoard").onclick=e=>{
-  const q=e.target.closest(".sq");if(!q||over||G.turn()!=="w")return;
-  const sq=q.dataset.sq,mv=cs?G.move({from:cs,to:sq,promotion:"q"}):null;
-  if(mv){cs=null;chDraw();if(!chEnd()){say("Kompyuter o’ylayapti...");setTimeout(chAI,400)}return}
-  const p=G.get(sq);cs=p&&p.color==="w"?sq:null;chDraw();
+  const q=e.target.closest(".sq");if(!q||over)return;
+  const two=!!P2.chess;if(!two&&G.turn()!=="w")return;
+  const me=G.turn(),sq=q.dataset.sq,mv=cs?G.move({from:cs,to:sq,promotion:"q"}):null;
+  if(mv){cs=null;chDraw();if(!chEnd()){if(two)say("");else{say("Kompyuter o’ylayapti...");setTimeout(chAI,400)}}return}
+  const p=G.get(sq);cs=p&&p.color===me?sq:null;chDraw();
 };
 function ev(){
   let s=0;const bd=G.board();
@@ -451,14 +475,18 @@ GM.gmem=()=>{const e=shuf([..."🍎🍇🍊🍓🍌🍉🍒🥝"].flatMap(x=>[x,
   M.onclick=ev=>{const b=ev.target.closest("[data-i]");if(!b||bz)return;const i=+b.dataset.i;if(op.includes(i)||ok&(1<<i))return;op.push(i);draw();
     if(op.length===2){mv++;bz=1;mtimer(()=>{if(e[op[0]]===e[op[1]])ok|=(1<<op[0])|(1<<op[1]);op=[];bz=0;draw();if(ok===65535)end("Hammasini topdingiz! "+mv+" harakat",1)},700)}};
   draw()};
-GM.gxo=()=>{const K=gSkin("gxo"),X="X",O="O",b=Array(9).fill(""),L=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];let bz=0;
+GM.gxo=()=>{const K=gSkin("gxo"),X="X",O="O",b=Array(9).fill(""),L=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];let bz=0,two=store.get("xo2",0)?1:0,t=X;
   const w=p=>L.some(l=>l.every(i=>b[i]===p));
   const sym=x=>x===X?`<span style="color:${K.a}">✖</span>`:x===O?`<span style="color:${K.b}">◯</span>`:"";
-  const draw=()=>mset(`<div class="note">Siz ✖, kompyuter ◯</div><div class="mb" style="grid-template-columns:repeat(3,1fr)">${b.map((x,i)=>`<button class="c" data-i="${i}" style="${BT}font-size:40px">${sym(x)}</button>`).join("")}</div>`);
-  const fin=()=>{if(w(X)){end("Siz yutdingiz!",1);return 1}if(w(O)){end("Yutqazdingiz",0);return 1}if(b.every(x=>x)){end("Durang",0);return 1}};
+  const draw=()=>mset(`<div class="note">${two?"Ikki kishi: ✖ va ◯ navbat bilan yurishadi":"Siz ✖, kompyuter ◯"}</div><div class="mb" style="grid-template-columns:repeat(3,1fr)">${b.map((x,i)=>`<button class="c" data-i="${i}" style="${BT}font-size:40px">${sym(x)}</button>`).join("")}</div><button class="btn" data-xm="1">${two?"🤖 Kompyuterga qarshi":"👥 Ikki kishi"}</button>`);
+  const fin=()=>{if(w(X)){end(two?"✖ (1-o’yinchi) yutdi!":"Siz yutdingiz!",two?0:1);return 1}if(w(O)){end(two?"◯ (2-o’yinchi) yutdi!":"Yutqazdingiz",0);return 1}if(b.every(x=>x)){end("Durang",0);return 1}};
   const pick=()=>{for(const p of[O,X])for(const l of L){const v=l.map(i=>b[i]);if(v.filter(x=>x===p).length===2&&v.includes(""))return l[v.indexOf("")]}
     if(!b[4])return 4;const f=b.map((x,i)=>x?-1:i).filter(i=>i>=0);return f[rnd(f.length)]};
-  M.onclick=ev=>{const k=ev.target.closest("[data-i]");if(!k||over||bz)return;const i=+k.dataset.i;if(b[i])return;b[i]=X;draw();if(fin())return;bz=1;mtimer(()=>{b[pick()]=O;bz=0;draw();fin()},350)};
+  M.onclick=ev=>{
+    const mb=ev.target.closest("[data-xm]");if(mb){two=1-two;store.set("xo2",two);draw();return}
+    const k=ev.target.closest("[data-i]");if(!k||over||bz)return;const i=+k.dataset.i;if(b[i])return;
+    if(two){b[i]=t;t=t===X?O:X;draw();fin();return}
+    b[i]=X;draw();if(fin())return;bz=1;mtimer(()=>{b[pick()]=O;bz=0;draw();fin()},350)};
   draw()};
 const QB={
 "➗ Matematika":["7 × 8 = ?|56|54|48|64","Uchburchak ichki burchaklari yig’indisi?|180°|90°|360°|270°","√144 = ?|12|14|11|16","Aylana uzunligi formulasi?|2πr|πr²|4πr|πr","0,5 ning oddiy kasr ko’rinishi?|1/2|1/4|2/3|1/5","Eng kichik tub son?|2|1|3|0","200 ning 15 foizi necha?|30|15|20|25","Tomoni 5 bo’lgan kvadratning yuzi?|25|20|10|15"],
@@ -910,6 +938,191 @@ function usePromo(){const i=$("promoIn"),v=(i.value||"").trim().toUpperCase(),us
   used.push(v);store.set("promos",used);i.value="";add(n);say("+"+n+" tanga! Promokod qabul qilindi.")}
 applySkin();
 render();
+
+// ================= DO’ST BILAN O’YNASH =================
+// 1) «Ikki kishi» — bitta telefonda navbat bilan (shashka/shaxmat/XO).
+// 2) «Onlayn» — xona kodi orqali ikki telefonda. Holat serverda saqlanadi.
+const MPU="https://coinplay-yuklash-5o2mnr-preview.freebuff.site";
+const MPT={xo:"XO",checkers:"Shashka",chess:"Shaxmat"};
+const MYN=(()=>{try{const u=tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user;return (u&&(u.first_name||u.username))||"O’yinchi"}catch(e){return "O’yinchi"}})();
+const P2=Object.assign({checkers:0,chess:0},store.get("p2",{}));
+function p2Paint(){document.querySelectorAll("[data-g2]").forEach(d=>{const g=d.dataset.g2;d.querySelectorAll("button").forEach(b=>b.classList.toggle("on",P2[g]?b.dataset.p2==="1":b.dataset.p2==="0"))})}
+document.querySelectorAll("[data-g2]").forEach(d=>{d.querySelectorAll("button").forEach(b=>b.onclick=()=>{P2[d.dataset.g2]=+b.dataset.p2;store.set("p2",P2);p2Paint();go(cur)})});
+p2Paint();
+
+let RM=null,mpT=null,onSel=null,onChain=null,onCs=null,onTemp=null;
+const mpErr=e=>(e&&e.message)||"Server bilan aloqa yo’q";
+async function mpq(p,b){
+  const r=await fetch(MPU+p,{method:b?"POST":"GET",headers:b?{"content-type":"application/json"}:{},body:b?JSON.stringify(b):undefined,cache:"no-store"});
+  let j={};try{j=await r.json()}catch(e){}
+  if(!r.ok||j.err)throw new Error(j.err||("Server xatosi ("+r.status+")"));
+  return j;
+}
+const XOL=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+function xoDone(s){for(const l of XOL){const a=s[l[0]];if(a!=="_"&&a===s[l[1]]&&a===s[l[2]])return a==="X"?1:2}return s.indexOf("_")<0?3:0}
+const NEWST={
+  xo:()=>({s:"_________",t:"X",o:0}),
+  checkers:()=>({b:Array.from({length:8},(_,r)=>Array.from({length:8},(_,c)=>(r+c)%2?(r<3?-1:r>4?1:0):0)),t:1,o:0}),
+  chess:()=>({fen:new Chess().fen(),o:0})
+};
+const fenTurn=f=>f.split(" ")[1]==="b"?"b":"w";
+function myTurn(){
+  if(!RM||RM.state.o)return false;
+  const s=RM.seat;
+  if(RM.game==="xo")return RM.state.t===(s===1?"X":"O");
+  if(RM.game==="checkers")return RM.state.t===(s===1?1:-1);
+  return fenTurn(RM.state.fen)===(s===1?"w":"b");
+}
+function resTxt(){const o=RM.state.o;return o===3?"durang":(o===RM.seat?"siz yutdingiz 🎉":"raqib yutdi")}
+function onMsg(t){const e=$("onMsg");if(e)e.textContent=t}
+function paintHead(){
+  if(!RM)return;
+  const oppN=RM.names[RM.seat===1?1:0]||"";
+  const role=RM.seat===1?"1-o’yinchi":"2-o’yinchi";
+  const stt=RM.state.o?("Natija: "+resTxt()):myTurn()?"Sizning yurishingiz 👇":oppN?"Raqibning yurishi ⏳":"Do’stingiz kutilmoqda ⏳";
+  $("onHead").innerHTML=`<b style="color:var(--gold)">${MPT[RM.game]}</b> · xona kodi: <b>${RM.code}</b><br>Siz: ${esc(MYN)} (${role}) · raqib: ${oppN?esc(oppN):"kutilmoqda..."}<br>${stt}`;
+}
+function boardBox(){const bd=$("onBoard");bd.style.background="transparent";return bd}
+function paintXo(){
+  const bd=boardBox(),K=gSkin("gxo"),a=K.a||"#3ddc97",b2=K.b||"#6bb5ff";
+  bd.style.gridTemplateColumns="repeat(3,1fr)";bd.style.gridTemplateRows="repeat(3,1fr)";bd.style.gap="8px";
+  bd.innerHTML=RM.state.s.split("").map((x,i)=>`<div class="sq" data-i="${i}" style="background:#1b2250;border-radius:12px;font-size:min(15vw,56px)">${x==="X"?`<span style="color:${a}">✖</span>`:x==="O"?`<span style="color:${b2}">◯</span>`:""}</div>`).join("");
+}
+function paintCk(board){
+  const bd=boardBox(),K=gSkin("checkers"),T=RM.seat===1?1:-1;
+  const legal=onSel?(onChain?pm(board,onSel[0],onSel[1]).filter(m=>m.x):allm(board,T)).filter(m=>m.r===onSel[0]&&m.c===onSel[1]):[];
+  let h="";
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const p=board[r][c],s=onSel&&onSel[0]===r&&onSel[1]===c,hint=legal.some(m=>m.r2===r&&m.c2===c);
+    h+=`<div class="sq ${s?"sel":""} ${hint?"hint":""}" style="background:${(r+c)%2?K.d:K.l}" data-r="${r}" data-c="${c}">${p?`<div class="ck" style="background:${p>0?K.w:K.k};color:${K.c}">${Math.abs(p)===2?"♛":""}</div>`:""}</div>`;
+  }
+  bd.style.gridTemplateColumns="repeat(8,1fr)";bd.style.gridTemplateRows="repeat(8,1fr)";bd.style.gap="0";
+  bd.innerHTML=h;
+}
+function paintCh(fen){
+  const bd=boardBox(),K=gSkin("chess"),g=new Chess(fen),b=g.board();
+  const legal=onCs?g.moves({square:onCs,verbose:true}).map(m=>m.to):[];
+  let h="";
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const sq="abcdefgh"[c]+(8-r),p=b[r][c];
+    h+=`<div class="sq ${sq===onCs?"sel":""} ${legal.includes(sq)?"hint":""}" style="background:${(r+c)%2?K.d:K.l}" data-sq="${sq}">${p?`<span class="pc ${p.color}">${U[p.type]}</span>`:""}</div>`;
+  }
+  bd.style.gridTemplateColumns="repeat(8,1fr)";bd.style.gridTemplateRows="repeat(8,1fr)";bd.style.gap="0";
+  bd.innerHTML=h;
+}
+function onDraw(){
+  if(!RM)return;
+  onSel=null;onChain=null;onCs=null;onTemp=null;
+  paintHead();
+  if(RM.game==="xo")paintXo();
+  else if(RM.game==="checkers")paintCk(RM.state.b);
+  else paintCh(RM.state.fen);
+  $("onNote").textContent="";
+}
+async function sendMove(ns){
+  const prev=RM.state;
+  RM.state=ns;onDraw();
+  try{
+    const r=await mpq("/api/room/set",{code:RM.code,token:RM.token,ver:RM.ver,state:ns});
+    RM.ver=r.ver;
+  }catch(e){
+    RM.state=prev;onDraw();
+    $("onNote").textContent=mpErr(e)+" — yurish yuborilmadi, qayta urinib ko’ring";
+    pollNow();
+  }
+}
+function startPoll(){stopPoll();mpT=setInterval(pollNow,1500)}
+function stopPoll(){if(mpT){clearInterval(mpT);mpT=null}}
+async function pollNow(){
+  if(!RM)return;
+  try{
+    const r=await mpq("/api/room/get?code="+encodeURIComponent(RM.code)+"&token="+encodeURIComponent(RM.token));
+    let ch=false;
+    if(r.seats!==RM.seats||r.names[0]!==RM.names[0]||r.names[1]!==RM.names[1]){RM.seats=r.seats;RM.names=r.names;ch=true}
+    if(r.ver!==RM.ver){RM.ver=r.ver;RM.state=r.state;ch=true}
+    if(ch)onDraw();
+  }catch(e){
+    if(/topilmadi|eskirgan|Ruxsat/.test(mpErr(e))){stopPoll();RM=null;$("onNote").textContent="Xona yopildi. Menyuga qaytib yangi xona yarating."}
+  }
+}
+function mpLeave(){stopPoll();RM=null;onSel=null;onChain=null;onCs=null;onTemp=null}
+async function newRoom(game){
+  onMsg("Xona yaratilmoqda...");
+  try{
+    const st=NEWST[game]();
+    const r=await mpq("/api/room/new",{game,name:MYN,state:st});
+    RM={code:r.code,token:r.token,seat:1,game,ver:r.ver,state:st,seats:1,names:[MYN,""]};
+    go("onplay");onDraw();startPoll();
+    $("onNote").textContent="Xona kodi: "+r.code+" — shu kodni do’stingizga yuboring.";
+  }catch(e){onMsg(mpErr(e))}
+}
+async function joinRoom(code){
+  onMsg("Ulanmoqda...");
+  try{
+    const r=await mpq("/api/room/join",{code,name:MYN});
+    RM={code:r.code,token:r.token,seat:2,game:r.game,ver:r.ver,state:r.state,seats:2,names:r.names};
+    go("onplay");onDraw();startPoll();
+    $("onNote").textContent="Xonaga qo’shildingiz! Kod: "+r.code;
+  }catch(e){onMsg(mpErr(e))}
+}
+function onInit(){
+  mpLeave();
+  const box=$("onBox");
+  box.innerHTML=`
+    <div class="note">O’yin turini tanlang — xona yaratiladi va 4 xonali kod chiqadi. Kodni do’stingizga yuboring, u shu ilovada kodni kiritib qo’shiladi. Ikkalangiz bir vaqtda o’ynaysiz.</div>
+    <div class="g3">${Object.keys(NEWST).map(k=>`<button class="btn ok" data-new="${k}">➕ ${MPT[k]}</button>`).join("")}</div>
+    <input class="code" id="onCode" maxlength="4" placeholder="KOD" autocomplete="off">
+    <button class="btn" id="onJoin">🔑 Xonaga qo’shilish</button>
+    <div class="note" id="onMsg"></div>`;
+  $("onJoin").onclick=()=>{
+    const v=($("onCode").value||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+    if(v.length!==4){onMsg("4 xonali kodni kiriting (masalan A7K2)");return}
+    joinRoom(v);
+  };
+  box.querySelectorAll("[data-new]").forEach(b=>b.onclick=()=>newRoom(b.dataset.new));
+}
+$("onCopy").onclick=async()=>{
+  if(!RM)return;
+  const txt="CoinPlay — birga o’ynaymiz! Xona kodi: "+RM.code+" ("+MPT[RM.game]+")";
+  try{await navigator.clipboard.writeText(txt);$("onNote").textContent="Kod nusxalandi: "+RM.code}
+  catch(e){$("onNote").textContent="Kod: "+RM.code+" — qo’lda yozib yuboring"}
+};
+$("onBoard").onclick=ev=>{
+  if(!RM||RM.state.o)return;
+  if(!myTurn()){$("onNote").textContent="Hozir raqibning yurishi";return}
+  if(RM.game==="xo"){
+    const q=ev.target.closest("[data-i]");if(!q)return;
+    const i=+q.dataset.i,s=RM.state;
+    if(s.s[i]!=="_")return;
+    const me=RM.seat===1?"X":"O",ns={s:s.s.slice(0,i)+me+s.s.slice(i+1),t:me==="X"?"O":"X",o:0};
+    ns.o=xoDone(ns.s);sendMove(ns);return;
+  }
+  if(RM.game==="checkers"){
+    const q=ev.target.closest("[data-r]");if(!q)return;
+    const r=+q.dataset.r,c=+q.dataset.c,T=RM.seat===1?1:-1,st=RM.state;
+    if(!onChain&&Math.sign(st.b[r][c])===T){onSel=(onSel&&onSel[0]===r&&onSel[1]===c)?null:[r,c];paintCk(st.b);return}
+    if(!onSel)return;
+    const base=(onTemp||st.b).map(x=>x.slice());
+    const mv=(onChain?pm(base,onChain[0],onChain[1]).filter(m=>m.x):allm(base,T)).find(m=>m.r===onSel[0]&&m.c===onSel[1]&&m.r2===r&&m.c2===c);
+    if(!mv)return;
+    const more=applyM(base,mv);
+    if(more){onTemp=base;onChain=[mv.r2,mv.c2];onSel=onChain;paintCk(base);return}
+    const ns={b:base,t:-T,o:0};
+    if(!allm(base,-T).length)ns.o=T===1?1:2;
+    sendMove(ns);return;
+  }
+  const q=ev.target.closest("[data-sq]");if(!q)return;
+  const to=q.dataset.sq,g2=new Chess(RM.state.fen),me=RM.seat===1?"w":"b";
+  if(onCs&&g2.move({from:onCs,to,promotion:"q"})){
+    onCs=null;
+    const ns={fen:g2.fen(),o:0};
+    if(g2.in_checkmate())ns.o=g2.turn()==="b"?1:2;
+    else if(g2.game_over())ns.o=3;
+    sendMove(ns);return;
+  }
+  const p=g2.get(to);onCs=(p&&p.color===me)?to:null;paintCh(RM.state.fen);
+};
+starters.online=onInit;
 </script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"edd0c47c6a254954a191049eb4eb9b16","r":1,"spa":2}' crossorigin="anonymous"></script>
 </body>
